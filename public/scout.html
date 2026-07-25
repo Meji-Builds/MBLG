@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scout Dashboard — Meji Connect</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot">M</span>
+      <div>
+        Meji Connect
+        <div class="sub" id="scoutName">Scout dashboard</div>
+      </div>
+    </div>
+    <nav>
+      <button class="link" data-view="deals">Referrals</button>
+      <button class="link" data-view="wallet">Wallet</button>
+      <button class="link" data-view="account">Account</button>
+      <button class="link" id="logout">Sign out</button>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div id="loading" class="empty">Loading your dashboard…</div>
+
+    <div id="app" style="display:none">
+      <!-- invite link -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Your invite link</h2>
+          <span class="badge active" id="rateBadge"></span>
+        </div>
+        <p class="hint" style="margin:0 0 14px">
+          Send this to anyone who needs building. Every project that starts here
+          is tracked to you automatically.
+        </p>
+        <div class="copybox">
+          <input id="inviteUrl" readonly />
+          <button class="ghost" id="copyUrl">Copy link</button>
+          <button class="ghost" id="shareUrl">Share</button>
+        </div>
+        <div class="hint">Or give them your code: <strong id="codeText"></strong></div>
+      </div>
+
+      <!-- wallet summary -->
+      <div class="stats">
+        <div class="stat green">
+          <div class="lbl">Available</div>
+          <div class="num" id="stAvailable">₦0</div>
+          <div class="note">Ready to withdraw</div>
+        </div>
+        <div class="stat amber">
+          <div class="lbl">On hold</div>
+          <div class="num" id="stPending">₦0</div>
+          <div class="note" id="holdNote"></div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Earned all time</div>
+          <div class="num" id="stLifetime">₦0</div>
+          <div class="note" id="paidOutNote"></div>
+        </div>
+        <div class="stat accent">
+          <div class="lbl">Referrals</div>
+          <div class="num" id="stDeals">0</div>
+          <div class="note" id="dealsNote"></div>
+        </div>
+      </div>
+
+      <!-- deals -->
+      <section data-panel="deals">
+        <div class="panel">
+          <div class="panel-head"><h2>Your referrals</h2></div>
+          <div id="debtNotice"></div>
+          <div class="table-scroll"><table id="dealsTable"></table></div>
+        </div>
+      </section>
+
+      <!-- wallet -->
+      <section data-panel="wallet" style="display:none">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Wallet</h2>
+            <button id="withdrawBtn">Withdraw</button>
+          </div>
+          <div id="walletNotice"></div>
+          <div class="table-scroll"><table id="ledgerTable"></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Withdrawals</h2></div>
+          <div class="table-scroll"><table id="withdrawalsTable"></table></div>
+        </div>
+      </section>
+
+      <!-- account -->
+      <section data-panel="account" style="display:none">
+        <div class="panel">
+          <div class="panel-head"><h2>Payout account</h2></div>
+          <p class="hint" style="margin:0 0 14px">
+            Where your commission is sent. Make sure the name matches the account
+            exactly — banks reject transfers that don't.
+          </p>
+          <form id="bankForm">
+            <div class="row">
+              <div class="field">
+                <label for="bkName">Bank</label>
+                <input id="bkName" placeholder="GTBank" required />
+              </div>
+              <div class="field">
+                <label for="bkCode">Bank code (optional)</label>
+                <input id="bkCode" placeholder="058" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="bkNumber">Account number</label>
+                <input id="bkNumber" inputmode="numeric" placeholder="0123456789" required />
+              </div>
+              <div class="field">
+                <label for="bkAccName">Account name</label>
+                <input id="bkAccName" placeholder="Ada Okeke" required />
+              </div>
+            </div>
+            <button type="submit">Save payout account</button>
+          </form>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>How you get paid</h2></div>
+          <div id="terms" class="hint"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/scout.js"></script>
+</body>
+</html>

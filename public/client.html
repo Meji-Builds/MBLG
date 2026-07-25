@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your project — Meji Builds</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot">M</span>
+      <div>
+        Meji Builds
+        <div class="sub" id="clientName">Your project</div>
+      </div>
+    </div>
+    <nav><button class="link" id="logout">Sign out</button></nav>
+  </header>
+
+  <div class="wrap mid">
+    <div id="loading" class="empty">Opening your project…</div>
+
+    <div id="denied" style="display:none">
+      <div class="notice bad">
+        We couldn't open this project. Use the link we emailed you, or ask us to
+        send a fresh one.
+      </div>
+    </div>
+
+    <div id="main" style="display:none">
+      <div id="dealTabs" class="tabs"></div>
+
+      <div class="panel" id="summary"></div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Conversation with Meji Builds</h2></div>
+        <div class="thread" id="thread"></div>
+        <div class="composer">
+          <textarea id="msgBox" placeholder="Write a message…" rows="1"></textarea>
+          <button id="send">Send</button>
+        </div>
+      </div>
+
+      <div class="panel" id="paymentsPanel" style="display:none">
+        <div class="panel-head"><h2>Payments</h2></div>
+        <div class="table-scroll"><table id="paymentsTable"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

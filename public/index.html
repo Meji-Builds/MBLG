@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meji Connect — refer clients, earn commission</title>
+  <meta name="description" content="Introduce a client to Meji Builds and earn commission when the project closes." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot">M</span>
+      <div>
+        Meji Connect
+        <div class="sub">by Meji Builds</div>
+      </div>
+    </div>
+    <nav>
+      <a href="/admin.html">Studio sign-in</a>
+    </nav>
+  </header>
+
+  <div class="wrap mid">
+    <div class="hero">
+      <h1>Know someone who needs building?</h1>
+      <p>
+        Introduce them to Meji Builds. When the project closes, you earn a share
+        of it — tracked here, start to finish.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Get your link</h3>
+        <p>Sign up and you're handed a personal invite link straight away.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Share it</h3>
+        <p>Send it to anyone who needs a website, app or brand built.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>We take it from there</h3>
+        <p>They brief us on the platform and we handle the pitch and pricing.</p>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <h3>Get paid</h3>
+        <p>
+          Your <span id="pctLabel">10%</span> lands as the client pays, and
+          withdraws to your bank after a <span id="holdLabel">10-day</span> hold.
+        </p>
+      </div>
+    </div>
+
+    <div class="panel" id="authPanel">
+      <div class="tabs">
+        <button class="active" data-tab="signup">Become a Scout</button>
+        <button data-tab="login">I already have an account</button>
+      </div>
+
+      <form id="signupForm">
+        <div class="row">
+          <div class="field">
+            <label for="suName">Full name</label>
+            <input id="suName" autocomplete="name" placeholder="Ada Okeke" required />
+          </div>
+          <div class="field">
+            <label for="suPhone">Phone (optional)</label>
+            <input id="suPhone" autocomplete="tel" placeholder="0801 234 5678" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="suEmail">Email</label>
+          <input id="suEmail" type="email" autocomplete="email" placeholder="you@email.com" required />
+        </div>
+        <div class="field">
+          <label for="suPassword">Password</label>
+          <input id="suPassword" type="password" autocomplete="new-password" placeholder="At least 8 characters" required />
+        </div>
+        <button class="full" type="submit">Create my Scout account</button>
+        <div class="hint">
+          No cost to join. You earn only when a project you introduced is paid for.
+        </div>
+      </form>
+
+      <form id="loginForm" style="display:none">
+        <div class="field">
+          <label for="liEmail">Email</label>
+          <input id="liEmail" type="email" autocomplete="email" placeholder="you@email.com" required />
+        </div>
+        <div class="field">
+          <label for="liPassword">Password</label>
+          <input id="liPassword" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="full" type="submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/index.js"></script>
+</body>
+</html>

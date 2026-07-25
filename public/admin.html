@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Studio Console — Meji Connect</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot">M</span>
+      <div>
+        Meji Connect
+        <div class="sub">Studio console</div>
+      </div>
+    </div>
+    <nav id="nav" style="display:none">
+      <button class="link" data-view="pipeline">Pipeline</button>
+      <button class="link" data-view="payouts">Payouts</button>
+      <button class="link" data-view="scouts">Scouts</button>
+      <button class="link" data-view="settings">Settings</button>
+      <button class="link" id="logout">Sign out</button>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <!-- sign in -->
+    <div id="loginWrap" class="wrap narrow" style="padding:40px 0">
+      <h1>Studio sign-in</h1>
+      <p class="lead">For Meji Builds staff.</p>
+      <form class="panel" id="loginForm">
+        <div class="field">
+          <label for="alEmail">Email</label>
+          <input id="alEmail" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="alPassword">Password</label>
+          <input id="alPassword" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="full" type="submit">Sign in</button>
+      </form>
+    </div>
+
+    <div id="app" style="display:none">
+      <div class="stats" id="overview"></div>
+
+      <!-- pipeline -->
+      <section data-panel="pipeline">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Pipeline</h2>
+            <div class="tabs" style="margin:0" id="statusFilter">
+              <button class="active" data-status="all">All</button>
+              <button data-status="new">New</button>
+              <button data-status="in_discussion">In discussion</button>
+              <button data-status="quoted">Quoted</button>
+              <button data-status="won">Won</button>
+              <button data-status="lost">Lost</button>
+            </div>
+          </div>
+          <div class="table-scroll"><table id="dealsTable"></table></div>
+        </div>
+      </section>
+
+      <!-- single deal -->
+      <section data-panel="deal" style="display:none">
+        <button class="ghost sm" id="backToPipeline" style="margin-bottom:14px">← Pipeline</button>
+        <div id="dealDetail"></div>
+      </section>
+
+      <!-- payouts -->
+      <section data-panel="payouts" style="display:none">
+        <div class="panel">
+          <div class="panel-head"><h2>Withdrawal requests</h2></div>
+          <div class="table-scroll"><table id="payoutsTable"></table></div>
+        </div>
+      </section>
+
+      <!-- scouts -->
+      <section data-panel="scouts" style="display:none">
+        <div class="panel">
+          <div class="panel-head"><h2>Scouts</h2></div>
+          <div class="table-scroll"><table id="scoutsTable"></table></div>
+        </div>
+      </section>
+
+      <!-- settings -->
+      <section data-panel="settings" style="display:none">
+        <div class="panel">
+          <div class="panel-head"><h2>Commission &amp; payouts</h2></div>
+          <form id="settingsForm">
+            <div class="row">
+              <div class="field">
+                <label for="setCommission">Default commission (%)</label>
+                <input id="setCommission" inputmode="decimal" />
+                <div class="help">Applies to new Scouts. Existing deals keep the rate they were created with.</div>
+              </div>
+              <div class="field">
+                <label for="setDeposit">Upfront deposit (%)</label>
+                <input id="setDeposit" inputmode="decimal" />
+                <div class="help">What a client pays to start.</div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="setHold">Hold period (days)</label>
+                <input id="setHold" inputmode="numeric" />
+                <div class="help">Commission is locked this long after a client pays. Applies to new commission only.</div>
+              </div>
+              <div class="field">
+                <label for="setMin">Minimum withdrawal (₦)</label>
+                <input id="setMin" inputmode="decimal" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="setWindow">Attribution window (days)</label>
+              <input id="setWindow" inputmode="numeric" />
+              <div class="help">How long a Scout keeps earning on repeat projects from a client they introduced.</div>
+            </div>
+            <button type="submit">Save settings</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Where clients send money</h2></div>
+          <p class="hint" style="margin:0 0 14px">
+            Shown to clients paying by transfer. Leave blank if you only take card payments.
+          </p>
+          <form id="bankSettingsForm">
+            <div class="row">
+              <div class="field">
+                <label for="setBank">Bank</label>
+                <input id="setBank" placeholder="GTBank" />
+              </div>
+              <div class="field">
+                <label for="setAcctNo">Account number</label>
+                <input id="setAcctNo" placeholder="0123456789" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="setAcctName">Account name</label>
+              <input id="setAcctName" placeholder="Meji Builds Ltd" />
+            </div>
+            <button type="submit">Save account</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Audit log</h2></div>
+          <div class="table-scroll"><table id="auditTable"></table></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
