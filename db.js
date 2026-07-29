@@ -21,9 +21,29 @@ if (!process.env.DATABASE_URL) {
 // them to numbers is safe and saves string maths at every call site.
 types.setTypeParser(20, (v) => (v === null ? null : parseInt(v, 10)));
 
-const isLocal = /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL || "");
+const rawUrl = process.env.DATABASE_URL || "";
+const isLocal = /localhost|127\.0\.0\.1/.test(rawUrl);
+
+// Neon's copy button hands you a URL with `channel_binding=require`, and pg's
+// driver mishandles that param — it forces SCRAM channel binding and then fails
+// the handshake against the pooled endpoint. TLS is already enforced by the
+// explicit `ssl` config below, so both `channel_binding` and `sslmode` are
+// stripped here and SSL is governed in exactly one place. This means you can
+// paste Neon's connection string verbatim and it just works.
+function sanitizeDbUrl(url) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.delete("channel_binding");
+    u.searchParams.delete("sslmode");
+    return u.toString();
+  } catch {
+    return url; // not URL-shaped (unlikely) — hand it to pg untouched
+  }
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: sanitizeDbUrl(rawUrl),
   // Neon requires TLS; its pooled endpoint terminates SSL for us.
   ssl: isLocal ? false : { rejectUnauthorized: false },
   max: 5,

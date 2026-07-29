@@ -78,6 +78,11 @@ Steps 1 to 4 involve no real money and no real people.
 > Tables are created automatically on the first request — there is no SQL to run
 > and no migration step.
 
+> **Paste Neon's string exactly as given.** Neon's copy button includes
+> `?sslmode=require&channel_binding=require`. The app strips `channel_binding`
+> itself (the Postgres driver mishandles it and would fail the handshake) and
+> enforces TLS on its own, so you don't need to edit the string by hand.
+
 ---
 
 ## 2. Deploy on Vercel
