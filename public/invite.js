@@ -17,7 +17,7 @@ GET(`/api/invite/${encodeURIComponent(code)}`)
   .then((r) => {
     show("form");
     $("#referrer").textContent = r.scoutName;
-    document.title = `${r.scoutName} invited you — Meji Builds`;
+    document.title = `${r.scoutName} invited you · Meji Builds`;
   })
   .catch(() => show("invalid"));
 
@@ -43,7 +43,7 @@ $("#intake").onsubmit = async (e) => {
     $("#goPortal").href = r.portalUrl;
     if (!r.emailed) {
       $("#done .notice div").innerHTML =
-        "<strong>Your project is open.</strong> Save the link below — it's how you get back in.";
+        "<strong>Your project is open.</strong> Save the link below. It's how you get back in.";
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   })();

@@ -63,7 +63,7 @@ function renderBalances(b) {
            <span class="ico">${icon("alert")}</span>
            <div>A client refund reversed commission that had already been paid out, so your
            balance is <strong>${money(b.available)}</strong>. Future commission clears this
-           automatically — you don't owe anything out of pocket.</div>
+           automatically. You don't owe anything out of pocket.</div>
          </div>`
       : "";
 }
@@ -121,7 +121,7 @@ function dealRow(d) {
         <div>${pill(d.status)}
         ${
           !d.eligible
-            ? `<div class="s" style="color:var(--gold);margin-top:4px">No commission — ${esc(d.ineligibleReason || "ruled out")}</div>`
+            ? `<div class="s" style="color:var(--gold);margin-top:4px">No commission: ${esc(d.ineligibleReason || "ruled out")}</div>`
             : ""
         }
         ${d.lostReason ? `<div class="s" style="margin-top:4px">${esc(d.lostReason)}</div>` : ""}</div>
@@ -246,7 +246,7 @@ function openWithdraw() {
     return toast(
       b.available <= 0
         ? "Nothing available to withdraw yet."
-        : `You need at least ${money(min)} available — you have ${money(b.available)}.`,
+        : `You need at least ${money(min)} available. You have ${money(b.available)}.`,
       true
     );
   }
@@ -266,7 +266,7 @@ function openWithdraw() {
       data.balances = r.balances;
       renderBalances(r.balances);
       await loadWallet();
-      toast("Withdrawal requested — we'll process it shortly.");
+      toast("Withdrawal requested. We'll process it shortly.");
     },
   });
 }
@@ -293,7 +293,7 @@ $("#bankForm").onsubmit = async (e) => {
 $("#copyUrl").onclick = () => copy($("#inviteUrl").value, "Invite link copied");
 $("#shareUrl").onclick = async () => {
   const url = $("#inviteUrl").value;
-  const text = "Need a website or app built? Meji Builds does great work — start here:";
+  const text = "Need a website or app built? Start here with Meji Builds:";
   if (navigator.share) {
     try {
       await navigator.share({ title: "Meji Builds", text, url });

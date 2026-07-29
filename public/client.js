@@ -118,7 +118,7 @@ function payActions(d) {
   }
   if (d.status === "won" && d.outstandingKobo === 0 && d.paidKobo > 0) {
     return `<div class="notice good" style="margin-top:18px">
-        <span class="ico">${icon("check")}</span><div>Fully paid — thank you!</div>
+        <span class="ico">${icon("check")}</span><div>Paid in full.</div>
       </div>`;
   }
   return "";
@@ -130,7 +130,7 @@ async function acceptQuote() {
   current = r.deal;
   renderSummary();
   poll.refresh();
-  toast("Quote accepted — let's go!");
+  toast("Quote accepted.");
 }
 
 // Manual mode returns bank details to display; Paystack returns a checkout URL.
@@ -157,7 +157,7 @@ async function startPayment(kind) {
         body: `I've sent ${money(r.amountKobo)} for ${current.ref}.`,
       });
       poll.refresh();
-      toast("Thanks — we'll confirm as soon as it lands.");
+      toast("Noted. We'll confirm once the transfer lands.");
     },
   });
 
@@ -216,7 +216,7 @@ $("#logout").onclick = async () => {
 // Returning from a Paystack redirect: the webhook may still be in flight, so
 // give it a moment before reloading payment state.
 if (new URLSearchParams(location.search).get("paid")) {
-  toast("Payment received — confirming now…");
+  toast("Payment received. Confirming now.");
   setTimeout(() => location.replace("/client.html"), 2500);
 }
 

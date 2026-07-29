@@ -49,12 +49,12 @@ async function main() {
   // the wallet at once: a payment older than the hold period has matured into
   // available balance, a recent one is still visibly counting down.
   const plan = [
-    [0, "Bola Adewale", "Bola Ventures", "Web app — booking platform", "won", 1_000_000, 0.8, 15],
+    [0, "Bola Adewale", "Bola Ventures", "Web app, booking platform", "won", 1_000_000, 0.8, 15],
     [0, "Ngozi Eze", "Eze Foods", "E-commerce store", "won", 2_500_000, 1, 2],
     [0, "Kunle Ade", "Adex Logistics", "Website redesign", "quoted", 600_000, 0, 0],
     [1, "Femi Cole", "Cole & Sons", "Mobile app", "won", 4_000_000, 0.8, 20],
-    [1, "Zainab Bello", "Bello Studios", "Branding & design", "lost", 350_000, 0, 0],
-    [1, "Chinedu Obi", "Obi Tech", "Web app — internal tools", "in_discussion", null, 0, 0],
+    [1, "Zainab Bello", "Bello Studios", "Branding and design", "lost", 350_000, 0, 0],
+    [1, "Chinedu Obi", "Obi Tech", "Web app, internal tools", "in_discussion", null, 0, 0],
   ];
 
   let dealNo = 0;
@@ -115,8 +115,8 @@ async function main() {
         deal.id,
         `${name} started this project via ${scouts[si].name}. Reference ${deal.ref}.`,
         name,
-        `Hi — we're looking at ${title.toLowerCase()}. What would this cost?`,
-        "Thanks for reaching out! Reviewing the brief now — quote coming shortly.",
+        `Hi, we're looking at ${title.toLowerCase()}. What would this cost?`,
+        "Thanks for reaching out. Reviewing the brief now, quote coming shortly.",
       ]
     );
 
@@ -171,7 +171,7 @@ Demo data ready.
   Scout    ada@example.com      / ${PASSWORD}   (10%, has a payout pending)
   Scout    tunde@example.com    / ${PASSWORD}   (20%)
 
-Client portals have no password — open a deal in the admin console to chat.
+Client portals have no password. Open a deal in the admin console to chat.
 `);
   await db.pool.end();
 }

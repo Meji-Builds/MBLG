@@ -399,7 +399,7 @@ app.post(
     if (email === scout.email || (phone && normPhone(scout.phone) === phone)) {
       return res.status(400).json({
         ok: false,
-        error: "This invite link belongs to you — a Scout can't refer themselves.",
+        error: "This invite link is your own. A Scout can't refer themselves.",
       });
     }
 
@@ -466,7 +466,7 @@ app.post(
 
     const ref = await uniqueCode("deals", "ref", "PJ");
     const title = projectType
-      ? `${projectType}${company ? ` — ${company}` : ""}`
+      ? `${projectType}${company ? ` for ${company}` : ""}`
       : `Project for ${company || name}`;
 
     const { rows: drows } = await db.q(
@@ -695,7 +695,7 @@ app.post(
       kind === "full" ? money.outstandingKobo : money.depositDueKobo || money.outstandingKobo;
 
     if (amountKobo <= 0)
-      return res.status(400).json({ ok: false, error: "Nothing left to pay — thank you!" });
+      return res.status(400).json({ ok: false, error: "This project is already paid in full." });
 
     const pay = provider();
     const init = await pay.initCheckout({
@@ -1133,13 +1133,13 @@ app.post(
       await postMessage(
         deal.id,
         { type: "system" },
-        `Project agreed at ${formatKobo(agreed)}. Welcome aboard!`
+        `Project agreed at ${formatKobo(agreed)}.`
       );
     if (status === "lost" || status === "cancelled")
       await postMessage(
         deal.id,
         { type: "system" },
-        `This project was closed${reason ? ` — ${reason}` : ""}.`
+        `This project was closed.${reason ? ` Reason: ${reason}` : ""}`
       );
 
     await db.audit(
@@ -1196,7 +1196,7 @@ app.post(
     if (Number(existing[0].n) > 0)
       return res.status(400).json({
         ok: false,
-        error: "Commission has already accrued on this deal — adjust the wallet instead.",
+        error: "Commission has already accrued on this deal. Adjust the wallet instead.",
       });
 
     const { rows } = await db.q(
@@ -1261,7 +1261,7 @@ app.post(
     await postMessage(
       deal.id,
       { type: "system" },
-      `Payment of ${formatKobo(amountKobo)} received. Thank you!`
+      `Payment of ${formatKobo(amountKobo)} received.`
     );
     await db.audit(
       { type: "admin", id: req.admin.id, label: req.admin.email },

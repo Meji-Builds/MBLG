@@ -153,7 +153,7 @@ async function main() {
   );
 
   r = await admin("POST", `/api/admin/deals/${dealId}/messages`, {
-    body: "Happy to help — quote coming.",
+    body: "Happy to help, quote coming.",
   });
   check("admin can reply", r.status, 200);
 

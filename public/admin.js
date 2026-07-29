@@ -137,7 +137,7 @@ async function openDeal(id) {
       d.attribution === "contested"
         ? `<div class="notice warn" style="margin-bottom:16px"><span class="ico">${icon("alert")}</span>
            <div><strong>Attribution is contested.</strong> More than one Scout claimed this
-           client, or they already existed. Confirm who — if anyone — should be credited.</div></div>`
+           client, or they already existed. Confirm who should be credited, if anyone.</div></div>`
         : ""
     }
     ${
@@ -160,7 +160,7 @@ async function openDeal(id) {
           </div>
           <div class="kv" style="margin-top:14px">
             <div><span class="k">Referred by</span><span class="v">${
-              d.scout_name ? `${esc(d.scout_name)} <span class="ref">${esc(d.referral_code)}</span>` : "Direct — no Scout"
+              d.scout_name ? `${esc(d.scout_name)} <span class="ref">${esc(d.referral_code)}</span>` : "Direct (no Scout)"
             }</span></div>
             <div><span class="k">Commission at ${d.commission_rate_bps / 100}%</span>
               <span class="v money">${r.projectedCommissionKobo ? money(r.projectedCommissionKobo) : "—"}</span></div>
@@ -314,7 +314,7 @@ function wireDeal(d) {
           kind: $("#pKind", root).value,
           note: $("#pNote", root).value,
         });
-        toast(r.commission ? `Recorded — ${money(r.commission.amount_kobo)} commission accrued.` : "Payment recorded.");
+        toast(r.commission ? `Recorded. ${money(r.commission.amount_kobo)} commission accrued.` : "Payment recorded.");
         reload();
       },
     })
@@ -334,7 +334,7 @@ function wireDeal(d) {
                <label for="eReason">Reason (required)</label>
                <input id="eReason" placeholder="Existing client since March" />
              </div>
-             <p class="hint">Commission already accrued isn't removed — adjust the Scout's
+             <p class="hint">Commission already accrued isn't removed. Adjust the Scout's
              wallet if it genuinely has to be reversed.</p>`,
       confirmLabel: "Remove commission",
       danger: true,
@@ -503,7 +503,7 @@ async function loadScouts() {
     b.onclick = busy(b, () =>
       sheet({
         title: "Edit Scout",
-        sub: "A new rate applies to future deals only — deals already running keep theirs.",
+        sub: "A new rate applies to future deals only. Deals already running keep theirs.",
         html: `<div class="field">
                  <label for="eRate">Commission (%)</label>
                  <input id="eRate" class="mono" inputmode="decimal" value="${b.dataset.rate}" />

@@ -313,6 +313,23 @@ h3 { font-size: 0.92rem; font-weight: 650; }
 .pill.failed, .pill.refunded, .pill.suspended, .pill.contested { background: var(--coral-soft); color: var(--coral); }
 .pill.pending, .pill.requested, .pill.processing, .pill.held, .pill.approved { background: var(--blue-soft); color: var(--blue); }
 
+/* A tag is NOT a pill. Pills carry state, which is why they get a semantic
+   colour and a status dot. A tag is a static fact about a record (a commission
+   rate, a plan name) and must stay neutral, or every screen ends up speckled
+   with green that means nothing. */
+.tag {
+  display: inline-flex; align-items: center;
+  font-size: 0.74rem; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 7px;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ══ BUTTONS ═════════════════════════════════════════════════════════════ */
 .btn, button.btn, a.btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;

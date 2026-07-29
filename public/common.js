@@ -179,7 +179,7 @@ async function copy(text, label = "Copied") {
     await navigator.clipboard.writeText(text);
     toast(label);
   } catch {
-    toast("Couldn't copy — select the text and copy it manually", true);
+    toast("Couldn't copy. Select the text and copy it manually.", true);
   }
 }
 

@@ -13,7 +13,7 @@ const ROOT = path.join(__dirname, "..");
 const css = fs.readFileSync(path.join(ROOT, "public", "styles.css"), "utf8");
 const out = process.argv[2] || path.join(ROOT, "prototype.html");
 
-const shell = `<title>Meji Connect — interactive prototype</title>
+const shell = `<title>Meji Connect · Interactive prototype</title>
 <style>
 ${css}
 
@@ -71,8 +71,8 @@ const body = String.raw`
           <span class="eyebrow">Referral programme</span>
           <h1>Know someone who needs <span class="gold">building</span>?</h1>
           <p class="lead">Introduce them to Meji Builds. When their project closes, you earn
-            <strong>10%</strong> of everything they pay — tracked here from the first hello
-            to the money landing in your account.</p>
+            <strong>10%</strong> of everything they pay, tracked from the first
+            introduction to the money reaching your account.</p>
         </section>
         <div class="steps">
           <div class="step"><span class="n">STEP 01</span><h3>Get your link</h3>
@@ -122,9 +122,9 @@ const body = String.raw`
   <main class="main bare"><div class="page mid">
     <div class="page-head"><div>
       <span class="eyebrow">Invitation</span>
-      <h1 style="margin-top:6px">Let's build it.</h1>
+      <h1 style="margin-top:6px">Tell us about your project.</h1>
       <p class="lead"><strong>Ada Okeke</strong> pointed you our way. Tell us what you need and
-      we'll come back with a plan and a price — usually same day.</p>
+      we'll come back with a plan and a price, usually the same day.</p>
     </div></div>
     <form class="card" onsubmit="return proto.go('client',event)">
       <div class="form-grid two">
@@ -134,13 +134,13 @@ const body = String.raw`
         <div class="field"><label>Phone</label><input value="0809 999 8888" /></div>
         <div class="field"><label>What do you need?</label>
           <select><option>Website</option><option>Web app</option><option>Mobile app</option>
-            <option>Branding &amp; design</option><option>E-commerce</option></select></div>
+            <option>Branding and design</option><option>E-commerce</option></select></div>
         <div class="field"><label>How soon?</label>
           <select><option>As soon as possible</option><option>Within a month</option>
             <option>1–3 months</option></select></div>
         <div class="field span-2"><label>Rough budget</label>
           <select><option>₦1,000,000 – ₦3,000,000</option><option>Prefer to discuss</option></select>
-          <span class="help">A range is fine — it just helps us scope sensibly.</span></div>
+          <span class="help">A range is fine. It helps us scope the work sensibly.</span></div>
         <div class="field span-2"><label>Tell us about the project *</label>
           <textarea required>We need a portfolio site with an enquiry form and a simple CMS so the team can post projects themselves.</textarea></div>
         <div class="span-2">
@@ -245,7 +245,7 @@ const body = String.raw`
     <section data-spanel="referrals" class="hidden">
       <div class="page-head">
         <div><h1>Your referrals</h1><p class="lead">Every project that started from your link.</p></div>
-        <span class="pill active">10% commission</span>
+        <span class="tag">10% commission</span>
       </div>
       <div class="card" style="padding:6px 5px">
         <div class="dl" style="--cols:2fr 2.2fr 1.1fr 1fr 1fr">
@@ -261,7 +261,7 @@ const body = String.raw`
           </div>
           <div class="dl-row">
             <div class="dl-cell primary"><div class="t">Bola Adewale</div><div class="s">Bola Ventures</div></div>
-            <div class="dl-cell"><span class="dl-k">Project</span><div><div>Web app — booking platform</div>
+            <div class="dl-cell"><span class="dl-k">Project</span><div><div>Web app, booking platform</div>
               <div class="s ref">PJ-DEMO1 · 28 Jun 26</div></div></div>
             <div class="dl-cell"><span class="dl-k">Status</span><span class="pill won">Won</span></div>
             <div class="dl-cell right"><span class="dl-k">Deal value</span><span class="money">₦1,000,000</span></div>
@@ -308,7 +308,7 @@ const body = String.raw`
           </div>
           <div class="dl-row">
             <div class="dl-cell primary"><div class="t" style="font-weight:500">Commission on PJ-DEMO1</div>
-              <div class="s"><span class="ref">PJ-DEMO1</span> · Web app — booking platform</div></div>
+              <div class="s"><span class="ref">PJ-DEMO1</span> · Web app, booking platform</div></div>
             <div class="dl-cell"><span class="dl-k">Status</span><span class="pill cleared">Cleared</span></div>
             <div class="dl-cell right"><span class="dl-k">Amount</span><span class="money pos">+₦80,000</span></div>
           </div>
@@ -338,7 +338,7 @@ const body = String.raw`
         <form class="form-grid two" onsubmit="return proto.saved(event)">
           <div class="field"><label>Bank</label><input value="GTBank" /></div>
           <div class="field"><label>Bank code</label><input class="mono" value="058" />
-            <span class="help">Optional — speeds up automatic transfers.</span></div>
+            <span class="help">Optional. Speeds up automatic transfers.</span></div>
           <div class="field"><label>Account number</label><input class="mono" value="0123456789" /></div>
           <div class="field"><label>Account name</label><input value="Ada Okeke" />
             <span class="help">Must match the account exactly, or the bank rejects it.</span></div>
@@ -431,7 +431,7 @@ const body = String.raw`
           </div>
           <div class="dl-row tap">
             <div class="dl-cell primary"><div class="t">Zainab Bello</div><div class="s">Bello Studios</div></div>
-            <div class="dl-cell"><span class="dl-k">Project</span><div><div>Branding &amp; design</div>
+            <div class="dl-cell"><span class="dl-k">Project</span><div><div>Branding and design</div>
               <div class="s ref">PJ-DEMO5 · 12 Jun 26</div></div></div>
             <div class="dl-cell"><span class="dl-k">Scout</span>
               <div>Tunde Bakare<div style="margin-top:4px"><span class="pill contested">Contested</span></div></div></div>
@@ -447,7 +447,7 @@ const body = String.raw`
         <i data-ico="back"></i> Pipeline</button>
       <div class="page-head">
         <div><h1>Grace Umeh</h1>
-          <p class="lead">Website — Umeh Interiors · <span class="ref">PJ-YD3M89</span></p></div>
+          <p class="lead">Website for Umeh Interiors · <span class="ref">PJ-YD3M89</span></p></div>
         <span class="pill in_discussion">In discussion</span>
       </div>
       <div class="grid-2 wide-first">
@@ -545,12 +545,12 @@ const body = String.raw`
 
     <section data-apanel="settings" class="hidden">
       <div class="page-head"><div><h1>Settings</h1>
-        <p class="lead">Changes apply to new deals and new commission — never retroactively.</p></div></div>
+        <p class="lead">Changes apply to new deals and new commission, never retroactively.</p></div></div>
       <div class="card">
         <div class="card-head"><h2>Commission &amp; payouts</h2></div>
         <form class="form-grid two" onsubmit="return proto.saved(event)">
           <div class="field"><label>Default commission</label><input class="mono" value="10" />
-            <span class="help">Percent. New Scouts only — existing deals keep their rate.</span></div>
+            <span class="help">Percent. Applies to new Scouts. Existing deals keep their rate.</span></div>
           <div class="field"><label>Upfront deposit</label><input class="mono" value="80" />
             <span class="help">Percent a client pays to start.</span></div>
           <div class="field"><label>Hold period</label><input class="mono" value="10" />
@@ -676,7 +676,7 @@ const withdraw=()=>sheet({
   html:'<div class="field"><label>Amount</label><div class="naira"><input value="40000" /></div>'+
        '<span class="help">₦40,000 available · minimum ₦5,000</span></div>',
   confirmLabel:'Request withdrawal',
-  onConfirm:()=>toast("Withdrawal requested — we'll process it shortly."),
+  onConfirm:()=>toast("Withdrawal requested. We'll process it shortly."),
 });
 $('#sWithdraw').onclick=withdraw; $('#sWithdraw2').onclick=withdraw;
 
@@ -698,9 +698,9 @@ $('#aQuote').onclick=()=>sheet({
   onConfirm:sc=>{
     const v=Number(String($('#qA',sc).value).replace(/[^0-9]/g,''))||1200000;
     state.quote=v; renderClient();
-    push(aMsgs,{who:'system',body:'Quote sent: '+ngn(v)+' for Website — Umeh Interiors. To start, '+ngn(v*0.8)+' (80%) is due upfront.'});
+    push(aMsgs,{who:'system',body:'Quote sent: '+ngn(v)+' for Website for Umeh Interiors. To start, '+ngn(v*0.8)+' (80%) is due upfront.'});
     renderThread($('#aThread'),aMsgs,'admin');
-    toast('Quote sent — switch to the Client tab to see it land.');
+    toast('Quote sent. Switch to the Client tab to see it land.');
   },
 });
 $('#aPayout').onclick=()=>sheet({
@@ -712,7 +712,7 @@ $('#aPayout').onclick=()=>sheet({
 });
 $('#aEditScout').onclick=()=>sheet({
   title:'Edit Scout',
-  sub:'A new rate applies to future deals only — deals already running keep theirs.',
+  sub:'A new rate applies to future deals only. Deals already running keep theirs.',
   html:'<div class="field"><label>Commission (%)</label><input class="mono" value="10" /></div>'+
        '<div class="field"><label>Status</label><select><option>Active</option><option>Suspended</option></select></div>',
   confirmLabel:'Save',
@@ -744,7 +744,7 @@ const state={quote:null,accepted:false,paid:false};
 function renderClient(){
   const el=$('#clientOffer');
   if(state.paid){
-    el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website — Umeh Interiors</h2>'+
+    el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website for Umeh Interiors</h2>'+
       '<span class="ref">PJ-YD3M89</span></div><span class="pill won">Won</span></div>'+
       '<div class="kv"><div><span class="k">Agreed price</span><span class="v"><span class="money">'+ngn(state.quote)+'</span></span></div>'+
       '<div><span class="k">Paid so far</span><span class="v"><span class="money pos">'+ngn(state.quote*0.8)+'</span></span></div>'+
@@ -752,7 +752,7 @@ function renderClient(){
     return;
   }
   if(state.accepted){
-    el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website — Umeh Interiors</h2>'+
+    el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website for Umeh Interiors</h2>'+
       '<span class="ref">PJ-YD3M89</span></div><span class="pill won">Won</span></div>'+
       '<div class="kv"><div><span class="k">Agreed price</span><span class="v"><span class="money">'+ngn(state.quote)+'</span></span></div></div>'+
       '<div class="btn-row" style="margin-top:18px"><button class="btn" id="payNow">Pay '+ngn(state.quote*0.8)+' deposit</button>'+
@@ -769,7 +769,7 @@ function renderClient(){
         state.paid=true;renderClient();
         push(cMsgs,{who:'client',body:"I've sent "+ngn(state.quote*0.8)+' for PJ-YD3M89.'});
         renderThread($('#clientThread'),cMsgs,'client');
-        toast("Thanks — we'll confirm as soon as it lands.");
+        toast("Noted. We'll confirm once the transfer lands.");
       },
     });
     return;
@@ -778,18 +778,18 @@ function renderClient(){
     el.innerHTML='<div class="offer"><div class="row-between" style="margin-bottom:6px">'+
       '<span class="eyebrow">Your quote</span><span class="pill quoted">Quoted</span></div>'+
       '<div class="price">'+ngn(state.quote)+'</div>'+
-      '<div class="sub">Website — Umeh Interiors · <span class="ref">PJ-YD3M89</span></div>'+
+      '<div class="sub">Website for Umeh Interiors · <span class="ref">PJ-YD3M89</span></div>'+
       '<p class="terms">To get started we ask for <strong>'+ngn(state.quote*0.8)+'</strong> (80%) upfront, '+
       'with the balance due on delivery.</p><button class="btn lg full" id="accept">Accept and start</button></div>';
     $('#accept').onclick=()=>{
       state.accepted=true;renderClient();
       push(cMsgs,{who:'system',body:'Grace Umeh accepted the quote of '+ngn(state.quote)+'.'});
       renderThread($('#clientThread'),cMsgs,'client');
-      toast("Quote accepted — let's go!");
+      toast('Quote accepted.');
     };
     return;
   }
-  el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website — Umeh Interiors</h2>'+
+  el.innerHTML='<div class="card"><div class="card-head"><div><h2>Website for Umeh Interiors</h2>'+
     '<span class="ref">PJ-YD3M89</span></div><span class="pill in_discussion">In discussion</span></div>'+
     '<p class="hint">We\'re reviewing your brief and will come back with a price shortly. '+
     '<strong>Try it:</strong> open the Studio tab above and send a quote.</p></div>';
