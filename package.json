@@ -8,7 +8,8 @@
     "start": "node server.js",
     "dev": "node server.js",
     "seed": "node scripts/seed-demo.js",
-    "test:ledger": "node scripts/check-ledger.js"
+    "prototype": "node scripts/build-prototype.js",
+    "test:ledger": "node scripts/check-flow.js"
   },
   "license": "UNLICENSED",
   "dependencies": {

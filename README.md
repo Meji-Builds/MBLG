@@ -102,6 +102,17 @@ functions can't hold a socket open, and polling is the right tool at this scale.
 
 ---
 
+## See it without installing anything
+
+```bash
+npm run prototype        # writes prototype.html — open it in any browser
+```
+
+One self-contained file with every screen and mock data: no server, no
+database, no network. It inlines `public/styles.css` verbatim, so it always
+matches the real app's look. Use it to review the interface, or to show someone
+what the platform does before it's deployed.
+
 ## Local setup
 
 ```bash
@@ -109,6 +120,9 @@ npm install
 cp .env.example .env      # add your DATABASE_URL, SESSION_SECRET, ADMIN_* vars
 npm start
 ```
+
+If anything is missing or wrong, `npm start` says exactly what and how to fix it
+rather than starting up and failing every request.
 
 Then open:
 

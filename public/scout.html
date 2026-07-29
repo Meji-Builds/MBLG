@@ -2,140 +2,181 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scout Dashboard — Meji Connect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Dashboard — Meji Connect</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="topbar">
+<div class="shell">
+
+  <!-- desktop rail -->
+  <nav class="rail" aria-label="Main">
     <div class="brand">
-      <span class="dot">M</span>
-      <div>
-        Meji Connect
-        <div class="sub" id="scoutName">Scout dashboard</div>
-      </div>
+      <span class="mark">M</span>
+      <span class="name">Meji Connect<small id="railName">Scout</small></span>
     </div>
-    <nav>
-      <button class="link" data-view="deals">Referrals</button>
-      <button class="link" data-view="wallet">Wallet</button>
-      <button class="link" data-view="account">Account</button>
-      <button class="link" id="logout">Sign out</button>
-    </nav>
+    <button data-view="home" class="is-on"><i data-icon="wallet"></i> Overview</button>
+    <button data-view="referrals"><i data-icon="list"></i> Referrals</button>
+    <button data-view="wallet"><i data-icon="cash"></i> Wallet</button>
+    <button data-view="account"><i data-icon="user"></i> Account</button>
+    <span class="spacer"></span>
+    <button id="logoutRail"><i data-icon="out"></i> Sign out</button>
+  </nav>
+
+  <!-- mobile header -->
+  <header class="mobilebar">
+    <div class="brand">
+      <span class="mark">M</span>
+      <span class="name">Meji Connect<small id="barName">Scout</small></span>
+    </div>
+    <button class="btn quiet sm" id="logoutBar">Sign out</button>
   </header>
 
-  <div class="wrap">
-    <div id="loading" class="empty">Loading your dashboard…</div>
+  <main class="main">
+    <div class="page">
 
-    <div id="app" style="display:none">
-      <!-- invite link -->
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Your invite link</h2>
-          <span class="badge active" id="rateBadge"></span>
-        </div>
-        <p class="hint" style="margin:0 0 14px">
-          Send this to anyone who needs building. Every project that starts here
-          is tracked to you automatically.
-        </p>
-        <div class="copybox">
-          <input id="inviteUrl" readonly />
-          <button class="ghost" id="copyUrl">Copy link</button>
-          <button class="ghost" id="shareUrl">Share</button>
-        </div>
-        <div class="hint">Or give them your code: <strong id="codeText"></strong></div>
+      <div id="loading">
+        <div class="skel" style="height:150px;border-radius:20px;margin-bottom:16px"></div>
+        <div class="skel skel-row"></div><div class="skel skel-row"></div>
       </div>
 
-      <!-- wallet summary -->
-      <div class="stats">
-        <div class="stat green">
-          <div class="lbl">Available</div>
-          <div class="num" id="stAvailable">₦0</div>
-          <div class="note">Ready to withdraw</div>
-        </div>
-        <div class="stat amber">
-          <div class="lbl">On hold</div>
-          <div class="num" id="stPending">₦0</div>
-          <div class="note" id="holdNote"></div>
-        </div>
-        <div class="stat">
-          <div class="lbl">Earned all time</div>
-          <div class="num" id="stLifetime">₦0</div>
-          <div class="note" id="paidOutNote"></div>
-        </div>
-        <div class="stat accent">
-          <div class="lbl">Referrals</div>
-          <div class="num" id="stDeals">0</div>
-          <div class="note" id="dealsNote"></div>
-        </div>
-      </div>
+      <div id="app" class="hidden">
 
-      <!-- deals -->
-      <section data-panel="deals">
-        <div class="panel">
-          <div class="panel-head"><h2>Your referrals</h2></div>
-          <div id="debtNotice"></div>
-          <div class="table-scroll"><table id="dealsTable"></table></div>
-        </div>
-      </section>
-
-      <!-- wallet -->
-      <section data-panel="wallet" style="display:none">
-        <div class="panel">
-          <div class="panel-head">
-            <h2>Wallet</h2>
-            <button id="withdrawBtn">Withdraw</button>
+        <!-- OVERVIEW -->
+        <section data-panel="home" class="stack">
+          <div class="balance">
+            <div class="eyebrow">Available to withdraw</div>
+            <div class="amount" id="bAvailable">₦0</div>
+            <div class="balance-actions">
+              <button class="btn" id="withdrawBtn">Withdraw</button>
+              <button class="btn ghost" data-view="referrals">View referrals</button>
+            </div>
+            <div class="balance-split">
+              <div>
+                <div class="k">On hold <span id="holdDays"></span></div>
+                <div class="v hold" id="bPending">₦0</div>
+              </div>
+              <div>
+                <div class="k">Earned all time</div>
+                <div class="v life" id="bLifetime">₦0</div>
+              </div>
+            </div>
           </div>
-          <div id="walletNotice"></div>
-          <div class="table-scroll"><table id="ledgerTable"></table></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>Withdrawals</h2></div>
-          <div class="table-scroll"><table id="withdrawalsTable"></table></div>
-        </div>
-      </section>
 
-      <!-- account -->
-      <section data-panel="account" style="display:none">
-        <div class="panel">
-          <div class="panel-head"><h2>Payout account</h2></div>
-          <p class="hint" style="margin:0 0 14px">
-            Where your commission is sent. Make sure the name matches the account
-            exactly — banks reject transfers that don't.
-          </p>
-          <form id="bankForm">
-            <div class="row">
-              <div class="field">
-                <label for="bkName">Bank</label>
-                <input id="bkName" placeholder="GTBank" required />
-              </div>
-              <div class="field">
-                <label for="bkCode">Bank code (optional)</label>
-                <input id="bkCode" placeholder="058" />
-              </div>
+          <div id="debtNotice"></div>
+
+          <div class="invite">
+            <div class="eyebrow">Your invite code</div>
+            <strong class="invite-code" id="codeText">—</strong>
+            <div class="copyrow">
+              <input id="inviteUrl" readonly aria-label="Your invite link" />
+              <button class="btn" id="copyUrl">Copy link</button>
+              <button class="btn ghost" id="shareUrl">Share</button>
             </div>
-            <div class="row">
-              <div class="field">
-                <label for="bkNumber">Account number</label>
-                <input id="bkNumber" inputmode="numeric" placeholder="0123456789" required />
-              </div>
-              <div class="field">
-                <label for="bkAccName">Account name</label>
-                <input id="bkAccName" placeholder="Ada Okeke" required />
-              </div>
+            <p class="hint" style="margin-top:12px">
+              Anyone who starts a project through this link is tracked to you automatically.
+            </p>
+          </div>
+
+          <div class="tiles" id="tiles"></div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>Recent activity</h2>
+              <button class="btn quiet sm" data-view="wallet">Full wallet</button>
             </div>
-            <button type="submit">Save payout account</button>
-          </form>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>How you get paid</h2></div>
-          <div id="terms" class="hint"></div>
-        </div>
-      </section>
+            <div id="recent"></div>
+          </div>
+        </section>
+
+        <!-- REFERRALS -->
+        <section data-panel="referrals" class="hidden">
+          <div class="page-head">
+            <div>
+              <h1>Your referrals</h1>
+              <p class="lead">Every project that started from your link.</p>
+            </div>
+            <span class="pill active" id="rateBadge"></span>
+          </div>
+          <div class="card" style="padding:6px 5px"><div id="dealsList"></div></div>
+        </section>
+
+        <!-- WALLET -->
+        <section data-panel="wallet" class="hidden" >
+          <div class="page-head">
+            <div>
+              <h1>Wallet</h1>
+              <p class="lead">Every naira in and out, and when it clears.</p>
+            </div>
+            <button class="btn" id="withdrawBtn2">Withdraw</button>
+          </div>
+          <div class="tiles" id="walletTiles" style="margin-bottom:16px"></div>
+          <div class="card" style="padding:6px 5px"><div id="ledgerList"></div></div>
+          <div class="card">
+            <div class="card-head"><h2>Withdrawals</h2></div>
+            <div id="withdrawalsList"></div>
+          </div>
+        </section>
+
+        <!-- ACCOUNT -->
+        <section data-panel="account" class="hidden">
+          <div class="page-head">
+            <div>
+              <h1>Account</h1>
+              <p class="lead">Where your commission gets sent.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Payout account</h2></div>
+            <form id="bankForm">
+              <div class="form-grid two">
+                <div class="field">
+                  <label for="bkName">Bank</label>
+                  <input id="bkName" placeholder="GTBank" required />
+                </div>
+                <div class="field">
+                  <label for="bkCode">Bank code</label>
+                  <input id="bkCode" class="mono" placeholder="058" />
+                  <span class="help">Optional — speeds up automatic transfers.</span>
+                </div>
+                <div class="field">
+                  <label for="bkNumber">Account number</label>
+                  <input id="bkNumber" class="mono" inputmode="numeric" placeholder="0123456789" required />
+                </div>
+                <div class="field">
+                  <label for="bkAccName">Account name</label>
+                  <input id="bkAccName" placeholder="Ada Okeke" required />
+                  <span class="help">Must match the account exactly, or the bank rejects it.</span>
+                </div>
+                <div class="span-2">
+                  <button class="btn" type="submit">Save payout account</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>How you get paid</h2></div>
+            <div class="kv" id="terms"></div>
+          </div>
+        </section>
+
+      </div>
     </div>
-  </div>
+  </main>
 
-  <script src="/common.js"></script>
-  <script src="/scout.js"></script>
+  <!-- mobile tab bar -->
+  <nav class="tabbar" aria-label="Main">
+    <button data-view="home" class="is-on"><i data-icon="wallet"></i><span>Overview</span></button>
+    <button data-view="referrals"><i data-icon="list"></i><span>Referrals</span></button>
+    <button data-view="wallet"><i data-icon="cash"></i><span>Wallet</span></button>
+    <button data-view="account"><i data-icon="user"></i><span>Account</span></button>
+  </nav>
+</div>
+
+<script src="/common.js"></script>
+<script src="/scout.js"></script>
 </body>
 </html>

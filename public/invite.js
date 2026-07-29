@@ -1,23 +1,25 @@
-// Client intake, reached via a Scout's invite link (/r/MC-XXXXXX).
+// Client intake, reached from a Scout's invite link (/r/MC-XXXXXX).
 
-// The code is in the path (/r/CODE) in production and may be a ?code= query
-// during local testing — accept both.
+// The code sits in the path in production and may be a ?code= query during
+// local testing — accept both.
 const code =
   location.pathname.split("/r/")[1]?.split(/[/?#]/)[0] ||
   new URLSearchParams(location.search).get("code") ||
   "";
 
+const show = (id) => {
+  ["loading", "invalid", "form", "done"].forEach((x) =>
+    $(`#${x}`).classList.toggle("hidden", x !== id)
+  );
+};
+
 GET(`/api/invite/${encodeURIComponent(code)}`)
   .then((r) => {
-    $("#loading").style.display = "none";
-    $("#form").style.display = "";
+    show("form");
     $("#referrer").textContent = r.scoutName;
     document.title = `${r.scoutName} invited you — Meji Builds`;
   })
-  .catch(() => {
-    $("#loading").style.display = "none";
-    $("#invalid").style.display = "";
-  });
+  .catch(() => show("invalid"));
 
 $("#intake").onsubmit = async (e) => {
   e.preventDefault();
@@ -35,14 +37,13 @@ $("#intake").onsubmit = async (e) => {
     });
 
     // The portal link is shown on screen whether or not email is configured —
-    // the client must never be locked out because a mail provider is missing.
-    $("#form").style.display = "none";
-    $("#done").style.display = "";
+    // a client must never be locked out because a mail provider is missing.
+    show("done");
     $("#portalUrl").value = r.portalUrl;
     $("#goPortal").href = r.portalUrl;
     if (!r.emailed) {
-      $("#done .notice").textContent =
-        "Your project is open. Save the link below — it's how you get back in.";
+      $("#done .notice div").innerHTML =
+        "<strong>Your project is open.</strong> Save the link below — it's how you get back in.";
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   })();

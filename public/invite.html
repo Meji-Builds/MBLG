@@ -2,122 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Start a project with Meji Builds</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+<div class="shell">
   <header class="topbar">
     <div class="brand">
-      <span class="dot">M</span>
-      <div>
-        Meji Builds
-        <div class="sub">Design & development studio</div>
-      </div>
+      <span class="mark">M</span>
+      <span class="name">Meji Builds<small>Design &amp; development studio</small></span>
     </div>
   </header>
 
-  <div class="wrap narrow">
-    <div id="loading" class="empty">Checking your invite…</div>
+  <main class="main bare">
+    <div class="page mid">
 
-    <div id="invalid" style="display:none">
-      <div class="notice bad">
-        This invite link isn't valid. Ask whoever sent it for an up-to-date one.
+      <div id="loading">
+        <div class="skel" style="height:34px;width:60%;margin-bottom:12px"></div>
+        <div class="skel" style="height:18px;width:85%;margin-bottom:26px"></div>
+        <div class="skel" style="height:320px;border-radius:14px"></div>
       </div>
-    </div>
 
-    <div id="form" style="display:none">
-      <h1>Let's build it.</h1>
-      <p class="lead">
-        <span id="referrer"></span> pointed you our way. Tell us what you need and
-        we'll come straight back to you with a plan and a price.
-      </p>
-
-      <form id="intake" class="panel">
-        <div class="row">
-          <div class="field">
-            <label for="fName">Your name *</label>
-            <input id="fName" autocomplete="name" placeholder="Bola Adewale" required />
-          </div>
-          <div class="field">
-            <label for="fCompany">Company</label>
-            <input id="fCompany" autocomplete="organization" placeholder="Bola Ventures" />
-          </div>
+      <div id="invalid" class="hidden">
+        <div class="notice bad">
+          <span class="ico"><i data-icon="alert"></i></span>
+          <div><strong>This invite link isn't valid.</strong><br />
+          Ask whoever sent it to share an up-to-date one.</div>
         </div>
-        <div class="row">
-          <div class="field">
-            <label for="fEmail">Email *</label>
-            <input id="fEmail" type="email" autocomplete="email" placeholder="you@company.com" required />
-          </div>
-          <div class="field">
-            <label for="fPhone">Phone</label>
-            <input id="fPhone" autocomplete="tel" placeholder="0801 234 5678" />
-          </div>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label for="fType">What do you need?</label>
-            <select id="fType">
-              <option>Website</option>
-              <option>Web app</option>
-              <option>Mobile app</option>
-              <option>Branding &amp; design</option>
-              <option>E-commerce</option>
-              <option>Something else</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="fTimeline">How soon?</label>
-            <select id="fTimeline">
-              <option>As soon as possible</option>
-              <option>Within a month</option>
-              <option>1–3 months</option>
-              <option>Just exploring</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label for="fBudget">Rough budget (optional)</label>
-          <select id="fBudget">
-            <option value="">Prefer to discuss</option>
-            <option>Under ₦500,000</option>
-            <option>₦500,000 – ₦1,000,000</option>
-            <option>₦1,000,000 – ₦3,000,000</option>
-            <option>₦3,000,000 – ₦10,000,000</option>
-            <option>Above ₦10,000,000</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="fDesc">Tell us about the project *</label>
-          <textarea id="fDesc" placeholder="What are you building, who is it for, and what does success look like?" required></textarea>
-        </div>
-        <button class="full" type="submit">Start my project</button>
-        <div class="hint">
-          You'll get a private link to chat with us directly — no account or password needed.
-        </div>
-      </form>
-    </div>
-
-    <div id="done" style="display:none">
-      <div class="panel">
-        <div class="notice good">Your project is open. We'll reply shortly.</div>
-        <h2>Save your project link</h2>
-        <p class="hint" style="margin-top:0">
-          This link is how you get back into the conversation. We've emailed it to
-          you too — but keep a copy.
-        </p>
-        <div class="copybox">
-          <input id="portalUrl" readonly />
-          <button class="ghost" id="copyLink">Copy</button>
-        </div>
-        <hr class="divider" />
-        <a class="btn full" id="goPortal">Open my project</a>
       </div>
-    </div>
-  </div>
 
-  <script src="/common.js"></script>
-  <script src="/invite.js"></script>
+      <div id="form" class="hidden">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Invitation</span>
+            <h1 style="margin-top:6px">Let's build it.</h1>
+            <p class="lead">
+              <strong id="referrer"></strong> pointed you our way. Tell us what you
+              need and we'll come back with a plan and a price — usually same day.
+            </p>
+          </div>
+        </div>
+
+        <form id="intake" class="card">
+          <div class="form-grid two">
+            <div class="field">
+              <label for="fName">Your name *</label>
+              <input id="fName" autocomplete="name" placeholder="Bola Adewale" required />
+            </div>
+            <div class="field">
+              <label for="fCompany">Company</label>
+              <input id="fCompany" autocomplete="organization" placeholder="Bola Ventures" />
+            </div>
+            <div class="field">
+              <label for="fEmail">Email *</label>
+              <input id="fEmail" type="email" autocomplete="email" placeholder="you@company.com" required />
+            </div>
+            <div class="field">
+              <label for="fPhone">Phone</label>
+              <input id="fPhone" autocomplete="tel" inputmode="tel" placeholder="0801 234 5678" />
+            </div>
+            <div class="field">
+              <label for="fType">What do you need?</label>
+              <select id="fType">
+                <option>Website</option>
+                <option>Web app</option>
+                <option>Mobile app</option>
+                <option>Branding &amp; design</option>
+                <option>E-commerce</option>
+                <option>Something else</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fTimeline">How soon?</label>
+              <select id="fTimeline">
+                <option>As soon as possible</option>
+                <option>Within a month</option>
+                <option>1–3 months</option>
+                <option>Just exploring</option>
+              </select>
+            </div>
+            <div class="field span-2">
+              <label for="fBudget">Rough budget</label>
+              <select id="fBudget">
+                <option value="">Prefer to discuss</option>
+                <option>Under ₦500,000</option>
+                <option>₦500,000 – ₦1,000,000</option>
+                <option>₦1,000,000 – ₦3,000,000</option>
+                <option>₦3,000,000 – ₦10,000,000</option>
+                <option>Above ₦10,000,000</option>
+              </select>
+              <span class="help">A range is fine — it just helps us scope sensibly.</span>
+            </div>
+            <div class="field span-2">
+              <label for="fDesc">Tell us about the project *</label>
+              <textarea id="fDesc" placeholder="What are you building, who is it for, and what does success look like?" required></textarea>
+            </div>
+            <div class="span-2">
+              <button class="btn lg full" type="submit">Start my project</button>
+              <p class="hint" style="margin-top:12px;text-align:center">
+                You'll get a private link to chat with us directly. No account, no password.
+              </p>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div id="done" class="hidden">
+        <div class="card">
+          <div class="notice good" style="margin-bottom:20px">
+            <span class="ico"><i data-icon="check"></i></span>
+            <div><strong>Your project is open.</strong> We'll reply shortly.</div>
+          </div>
+          <h2>Save your project link</h2>
+          <p class="hint" style="margin:6px 0 14px">
+            This link is how you get back into the conversation — bookmark it.
+          </p>
+          <div class="copyrow">
+            <input id="portalUrl" readonly aria-label="Your project link" />
+            <button class="btn ghost" id="copyLink">Copy</button>
+          </div>
+          <a class="btn lg full" id="goPortal" style="margin-top:18px">Open my project</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/common.js"></script>
+<script src="/invite.js"></script>
 </body>
 </html>

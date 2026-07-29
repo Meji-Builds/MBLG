@@ -8,21 +8,33 @@ GET("/api/me")
   })
   .catch(() => {});
 
-// Show the real commission rate and hold period rather than hard-coded copy,
-// so changing them in the admin dashboard updates the pitch too.
+// Show the live commission rate and hold period rather than hard-coded copy, so
+// changing them in the studio settings updates the pitch too.
 GET("/api/config")
   .then((c) => {
     $("#pctLabel").textContent = `${c.defaultCommissionPercent}%`;
     $("#holdLabel").textContent = `${c.holdDays}-day`;
   })
-  .catch(() => {});
+  .catch(() => {
+    // The database is unreachable. Say so here rather than leaving someone
+    // filling in a form that can't possibly submit.
+    $("#authCard").insertAdjacentHTML(
+      "afterbegin",
+      `<div class="notice bad" style="margin-bottom:16px">
+         <span class="ico">${icon("alert")}</span>
+         <div><strong>Can't reach the server.</strong> If you're running this
+         locally, check that <code class="mono">DATABASE_URL</code> is set in your
+         <code class="mono">.env</code> file.</div>
+       </div>`
+    );
+  });
 
-$$(".tabs button").forEach((btn) => {
+$$(".linktabs button").forEach((btn) => {
   btn.onclick = () => {
-    $$(".tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+    $$(".linktabs button").forEach((b) => b.classList.toggle("is-on", b === btn));
     const signup = btn.dataset.tab === "signup";
-    $("#signupForm").style.display = signup ? "" : "none";
-    $("#loginForm").style.display = signup ? "none" : "";
+    $("#signupForm").classList.toggle("hidden", !signup);
+    $("#loginForm").classList.toggle("hidden", signup);
   };
 });
 

@@ -2,160 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Studio Console — Meji Connect</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="dot">M</span>
-      <div>
-        Meji Connect
-        <div class="sub">Studio console</div>
+<div class="shell">
+
+  <!-- sign in (no chrome until authenticated) -->
+  <div id="loginWrap" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">M</span>
+        <span class="name">Meji Connect<small>Studio console</small></span>
       </div>
-    </div>
-    <nav id="nav" style="display:none">
-      <button class="link" data-view="pipeline">Pipeline</button>
-      <button class="link" data-view="payouts">Payouts</button>
-      <button class="link" data-view="scouts">Scouts</button>
-      <button class="link" data-view="settings">Settings</button>
-      <button class="link" id="logout">Sign out</button>
+    </header>
+    <main class="main bare">
+      <div class="page narrow" style="padding-top:56px">
+        <span class="eyebrow">Meji Builds staff</span>
+        <h1 style="margin:6px 0 22px">Studio sign-in</h1>
+        <form class="card form-grid" id="loginForm">
+          <div class="field">
+            <label for="alEmail">Email</label>
+            <input id="alEmail" type="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="alPassword">Password</label>
+            <input id="alPassword" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn lg full" type="submit">Sign in</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- console -->
+  <div id="console" class="hidden">
+    <nav class="rail" aria-label="Main">
+      <div class="brand">
+        <span class="mark">M</span>
+        <span class="name">Meji Connect<small>Studio console</small></span>
+      </div>
+      <button data-view="pipeline" class="is-on"><i data-icon="inbox"></i> Pipeline</button>
+      <button data-view="payouts"><i data-icon="cash"></i> Payouts <span id="payoutDot"></span></button>
+      <button data-view="scouts"><i data-icon="people"></i> Scouts</button>
+      <button data-view="settings"><i data-icon="cog"></i> Settings</button>
+      <span class="spacer"></span>
+      <button id="logoutRail"><i data-icon="out"></i> Sign out</button>
     </nav>
-  </header>
 
-  <div class="wrap">
-    <!-- sign in -->
-    <div id="loginWrap" class="wrap narrow" style="padding:40px 0">
-      <h1>Studio sign-in</h1>
-      <p class="lead">For Meji Builds staff.</p>
-      <form class="panel" id="loginForm">
-        <div class="field">
-          <label for="alEmail">Email</label>
-          <input id="alEmail" type="email" autocomplete="email" required />
-        </div>
-        <div class="field">
-          <label for="alPassword">Password</label>
-          <input id="alPassword" type="password" autocomplete="current-password" required />
-        </div>
-        <button class="full" type="submit">Sign in</button>
-      </form>
-    </div>
+    <header class="mobilebar">
+      <div class="brand">
+        <span class="mark">M</span>
+        <span class="name">Studio console<small id="mobileCrumb">Pipeline</small></span>
+      </div>
+      <button class="btn quiet sm" id="logoutBar">Sign out</button>
+    </header>
 
-    <div id="app" style="display:none">
-      <div class="stats" id="overview"></div>
+    <main class="main">
+      <div class="page">
+        <div class="tiles" id="overview" style="margin-bottom:22px"></div>
 
-      <!-- pipeline -->
-      <section data-panel="pipeline">
-        <div class="panel">
-          <div class="panel-head">
-            <h2>Pipeline</h2>
-            <div class="tabs" style="margin:0" id="statusFilter">
-              <button class="active" data-status="all">All</button>
-              <button data-status="new">New</button>
-              <button data-status="in_discussion">In discussion</button>
-              <button data-status="quoted">Quoted</button>
-              <button data-status="won">Won</button>
-              <button data-status="lost">Lost</button>
+        <!-- PIPELINE -->
+        <section data-panel="pipeline">
+          <div class="page-head">
+            <div>
+              <h1>Pipeline</h1>
+              <p class="lead">Every project, newest activity first.</p>
             </div>
           </div>
-          <div class="table-scroll"><table id="dealsTable"></table></div>
-        </div>
-      </section>
+          <div class="seg" id="statusFilter" style="margin-bottom:16px">
+            <button class="is-on" data-status="all">All</button>
+            <button data-status="new">New</button>
+            <button data-status="in_discussion">In discussion</button>
+            <button data-status="quoted">Quoted</button>
+            <button data-status="won">Won</button>
+            <button data-status="lost">Lost</button>
+          </div>
+          <div class="card" style="padding:6px 5px"><div id="dealsList"></div></div>
+        </section>
 
-      <!-- single deal -->
-      <section data-panel="deal" style="display:none">
-        <button class="ghost sm" id="backToPipeline" style="margin-bottom:14px">← Pipeline</button>
-        <div id="dealDetail"></div>
-      </section>
+        <!-- ONE DEAL -->
+        <section data-panel="deal" class="hidden">
+          <button class="btn quiet sm" id="backBtn" style="margin-bottom:16px">
+            <i data-icon="back"></i> Pipeline
+          </button>
+          <div id="dealDetail"></div>
+        </section>
 
-      <!-- payouts -->
-      <section data-panel="payouts" style="display:none">
-        <div class="panel">
-          <div class="panel-head"><h2>Withdrawal requests</h2></div>
-          <div class="table-scroll"><table id="payoutsTable"></table></div>
-        </div>
-      </section>
-
-      <!-- scouts -->
-      <section data-panel="scouts" style="display:none">
-        <div class="panel">
-          <div class="panel-head"><h2>Scouts</h2></div>
-          <div class="table-scroll"><table id="scoutsTable"></table></div>
-        </div>
-      </section>
-
-      <!-- settings -->
-      <section data-panel="settings" style="display:none">
-        <div class="panel">
-          <div class="panel-head"><h2>Commission &amp; payouts</h2></div>
-          <form id="settingsForm">
-            <div class="row">
-              <div class="field">
-                <label for="setCommission">Default commission (%)</label>
-                <input id="setCommission" inputmode="decimal" />
-                <div class="help">Applies to new Scouts. Existing deals keep the rate they were created with.</div>
-              </div>
-              <div class="field">
-                <label for="setDeposit">Upfront deposit (%)</label>
-                <input id="setDeposit" inputmode="decimal" />
-                <div class="help">What a client pays to start.</div>
-              </div>
+        <!-- PAYOUTS -->
+        <section data-panel="payouts" class="hidden">
+          <div class="page-head">
+            <div>
+              <h1>Payouts</h1>
+              <p class="lead">Scouts waiting to be paid. Approve, then send the transfer.</p>
             </div>
-            <div class="row">
-              <div class="field">
-                <label for="setHold">Hold period (days)</label>
-                <input id="setHold" inputmode="numeric" />
-                <div class="help">Commission is locked this long after a client pays. Applies to new commission only.</div>
-              </div>
-              <div class="field">
-                <label for="setMin">Minimum withdrawal (₦)</label>
-                <input id="setMin" inputmode="decimal" />
-              </div>
-            </div>
-            <div class="field">
-              <label for="setWindow">Attribution window (days)</label>
-              <input id="setWindow" inputmode="numeric" />
-              <div class="help">How long a Scout keeps earning on repeat projects from a client they introduced.</div>
-            </div>
-            <button type="submit">Save settings</button>
-          </form>
-        </div>
+          </div>
+          <div class="card" style="padding:6px 5px"><div id="payoutsList"></div></div>
+        </section>
 
-        <div class="panel">
-          <div class="panel-head"><h2>Where clients send money</h2></div>
-          <p class="hint" style="margin:0 0 14px">
-            Shown to clients paying by transfer. Leave blank if you only take card payments.
-          </p>
-          <form id="bankSettingsForm">
-            <div class="row">
+        <!-- SCOUTS -->
+        <section data-panel="scouts" class="hidden">
+          <div class="page-head">
+            <div>
+              <h1>Scouts</h1>
+              <p class="lead">Rates, status and lifetime earnings.</p>
+            </div>
+          </div>
+          <div class="card" style="padding:6px 5px"><div id="scoutsList"></div></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section data-panel="settings" class="hidden">
+          <div class="page-head">
+            <div>
+              <h1>Settings</h1>
+              <p class="lead">Changes apply to new deals and new commission — never retroactively.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Commission &amp; payouts</h2></div>
+            <form id="settingsForm" class="form-grid two">
+              <div class="field">
+                <label for="setCommission">Default commission</label>
+                <input id="setCommission" class="mono" inputmode="decimal" />
+                <span class="help">Percent. New Scouts only — existing deals keep their rate.</span>
+              </div>
+              <div class="field">
+                <label for="setDeposit">Upfront deposit</label>
+                <input id="setDeposit" class="mono" inputmode="decimal" />
+                <span class="help">Percent a client pays to start.</span>
+              </div>
+              <div class="field">
+                <label for="setHold">Hold period</label>
+                <input id="setHold" class="mono" inputmode="numeric" />
+                <span class="help">Days commission is locked after a client pays.</span>
+              </div>
+              <div class="field">
+                <label for="setMin">Minimum withdrawal</label>
+                <div class="naira"><input id="setMin" inputmode="decimal" /></div>
+              </div>
+              <div class="field span-2">
+                <label for="setWindow">Attribution window</label>
+                <input id="setWindow" class="mono" inputmode="numeric" />
+                <span class="help">Days a Scout keeps earning on repeat projects from a client they introduced.</span>
+              </div>
+              <div class="span-2"><button class="btn" type="submit">Save settings</button></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Where clients send money</h2></div>
+            <p class="hint" style="margin-bottom:16px">
+              Shown to clients paying by bank transfer.
+            </p>
+            <form id="bankSettingsForm" class="form-grid two">
               <div class="field">
                 <label for="setBank">Bank</label>
                 <input id="setBank" placeholder="GTBank" />
               </div>
               <div class="field">
                 <label for="setAcctNo">Account number</label>
-                <input id="setAcctNo" placeholder="0123456789" />
+                <input id="setAcctNo" class="mono" inputmode="numeric" placeholder="0123456789" />
               </div>
-            </div>
-            <div class="field">
-              <label for="setAcctName">Account name</label>
-              <input id="setAcctName" placeholder="Meji Builds Ltd" />
-            </div>
-            <button type="submit">Save account</button>
-          </form>
-        </div>
+              <div class="field span-2">
+                <label for="setAcctName">Account name</label>
+                <input id="setAcctName" placeholder="Meji Builds Ltd" />
+              </div>
+              <div class="span-2"><button class="btn" type="submit">Save account</button></div>
+            </form>
+          </div>
 
-        <div class="panel">
-          <div class="panel-head"><h2>Audit log</h2></div>
-          <div class="table-scroll"><table id="auditTable"></table></div>
-        </div>
-      </section>
-    </div>
+          <div class="card">
+            <div class="card-head"><h2>Audit log</h2></div>
+            <div id="auditList"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <nav class="tabbar" aria-label="Main">
+      <button data-view="pipeline" class="is-on"><i data-icon="inbox"></i><span>Pipeline</span></button>
+      <button data-view="payouts"><i data-icon="cash"></i><span>Payouts</span></button>
+      <button data-view="scouts"><i data-icon="people"></i><span>Scouts</span></button>
+      <button data-view="settings"><i data-icon="cog"></i><span>Settings</span></button>
+    </nav>
   </div>
+</div>
 
-  <script src="/common.js"></script>
-  <script src="/admin.js"></script>
+<script src="/common.js"></script>
+<script src="/admin.js"></script>
 </body>
 </html>

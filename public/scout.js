@@ -7,107 +7,163 @@
 let data = null;
 let wallet = null;
 
+// ---- load ----
 async function load() {
   try {
     data = await GET("/api/scout/dashboard");
   } catch (e) {
     if (e.status === 401) return location.replace("/");
-    throw e;
+    $("#loading").innerHTML = `<div class="notice bad">
+      <span class="ico">${icon("alert")}</span>
+      <div><strong>Couldn't load your dashboard.</strong><br />${esc(e.message)}</div>
+    </div>`;
+    return;
   }
-  $("#loading").style.display = "none";
-  $("#app").style.display = "";
+
+  $("#loading").classList.add("hidden");
+  $("#app").classList.remove("hidden");
 
   const s = data.scout;
-  $("#scoutName").textContent = s.name;
+  $("#railName").textContent = s.name;
+  $("#barName").textContent = s.name;
   $("#inviteUrl").value = s.inviteUrl;
   $("#codeText").textContent = s.referralCode;
   $("#rateBadge").textContent = `${s.commissionPercent}% commission`;
+  $("#holdDays").textContent = `· ${data.settings.holdDays} days`;
 
   $("#bkName").value = s.bank.bankName;
   $("#bkCode").value = s.bank.bankCode;
   $("#bkNumber").value = s.bank.accountNumber;
   $("#bkAccName").value = s.bank.accountName;
 
-  $("#holdNote").textContent = `Clears ${data.settings.holdDays} days after the client pays`;
-  $("#dealsNote").textContent = `${data.stats.won} won · ${data.stats.open} open`;
   $("#terms").innerHTML = `
-    You earn <strong>${s.commissionPercent}%</strong> of what each client you
-    introduced actually pays Meji Builds — so if they pay in instalments, your
-    commission arrives the same way.<br /><br />
-    Each amount is held for <strong>${data.settings.holdDays} days</strong> after
-    the client's payment clears, in case the project is cancelled or refunded.
-    After that it moves to your available balance and you can withdraw any amount
-    from <strong>${money(data.settings.minWithdrawalKobo)}</strong> upwards.`;
+    <div><span class="k">Your rate</span><span class="v strong">${esc(s.commissionPercent)}% of what the client pays</span></div>
+    <div><span class="k">When it's earned</span><span class="v">Each time a client you introduced actually pays</span></div>
+    <div><span class="k">Hold period</span><span class="v">${data.settings.holdDays} days from the client's payment</span></div>
+    <div><span class="k">Minimum withdrawal</span><span class="v money">${money(data.settings.minWithdrawalKobo)}</span></div>`;
 
   renderBalances(data.balances);
+  renderTiles();
   renderDeals();
+  renderRecent();
 }
 
 function renderBalances(b) {
-  $("#stAvailable").textContent = money(b.available);
-  $("#stAvailable").classList.toggle("neg", b.available < 0);
-  $("#stPending").textContent = money(b.pending);
-  $("#stLifetime").textContent = money(b.lifetime);
-  $("#stDeals").textContent = data.stats.total;
-  $("#paidOutNote").textContent = `${money(b.withdrawn)} withdrawn`;
+  const av = $("#bAvailable");
+  av.textContent = money(b.available);
+  av.classList.toggle("neg", b.available < 0);
+  $("#bPending").textContent = money(b.pending);
+  $("#bLifetime").textContent = money(b.lifetime);
 
-  // A negative balance means a refund clawed back more than is left. Say so
-  // plainly rather than showing a mystifying minus number.
-  const debt = b.available < 0;
-  $("#debtNotice").innerHTML = debt
-    ? `<div class="notice warn">
-         A client refund reversed commission that had already been paid out, so
-         your balance is ${money(b.available)}. Future commission clears this
-         automatically — nothing is owed out of pocket.
-       </div>`
-    : "";
+  // A negative balance means a refund clawed back more than was left. Say that
+  // plainly instead of showing a mystifying minus number.
+  $("#debtNotice").innerHTML =
+    b.available < 0
+      ? `<div class="notice warn">
+           <span class="ico">${icon("alert")}</span>
+           <div>A client refund reversed commission that had already been paid out, so your
+           balance is <strong>${money(b.available)}</strong>. Future commission clears this
+           automatically — you don't owe anything out of pocket.</div>
+         </div>`
+      : "";
 }
+
+function renderTiles() {
+  const b = data.balances;
+  $("#tiles").innerHTML = `
+    <div class="tile"><div class="k">Referrals</div><div class="v">${data.stats.total}</div>
+      <div class="n">${data.stats.open} still open</div></div>
+    <div class="tile"><div class="k">Won</div><div class="v jade">${data.stats.won}</div>
+      <div class="n">${data.stats.lost} didn't go ahead</div></div>
+    <div class="tile"><div class="k">Withdrawn</div><div class="v">${money(b.withdrawn)}</div>
+      <div class="n">paid to your bank</div></div>`;
+}
+
+// ---- referrals ----
+const DEAL_COLS = "2fr 2.2fr 1.1fr 1fr 1fr";
 
 function renderDeals() {
   const rows = data.deals;
-  const table = $("#dealsTable");
+  const el = $("#dealsList");
   if (!rows.length) {
-    table.innerHTML = `<tbody><tr><td><div class="empty">
-      No referrals yet. Share your link above to get started.
-    </div></td></tr></tbody>`;
+    el.innerHTML = empty(
+      "link",
+      "No referrals yet",
+      "Share your invite link and any project that starts from it shows up here."
+    );
     return;
   }
-  table.innerHTML = `
-    <thead><tr>
-      <th>Client</th><th>Project</th><th>Status</th>
-      <th class="num">Deal value</th><th class="num">Paid</th><th class="num">Your commission</th>
-    </tr></thead>
-    <tbody>${rows
-      .map((d) => {
-        const value = d.agreedKobo || d.quotedKobo;
-        return `<tr>
-          <td>
-            <div class="strong">${esc(d.clientName)}</div>
-            ${d.clientCompany ? `<div class="meta">${esc(d.clientCompany)}</div>` : ""}
-          </td>
-          <td>
-            <div>${esc(d.title)}</div>
-            <div class="meta">${esc(d.ref)} · ${when(d.createdAt)}</div>
-          </td>
-          <td>
-            ${badge(d.status)}
-            ${
-              !d.eligible
-                ? `<div class="meta" style="margin-top:4px;color:var(--amber)">
-                     No commission — ${esc(d.ineligibleReason || "ruled out")}
-                   </div>`
-                : ""
-            }
-            ${d.lostReason ? `<div class="meta" style="margin-top:4px">${esc(d.lostReason)}</div>` : ""}
-          </td>
-          <td class="num money">${value ? money(value) : "—"}</td>
-          <td class="num money">${d.paidKobo ? money(d.paidKobo) : "—"}</td>
-          <td class="num money ${d.earnedKobo > 0 ? "pos" : ""}">
-            ${d.earnedKobo ? money(d.earnedKobo) : `<span style="color:var(--muted);font-weight:400">${d.commissionPercent}% when paid</span>`}
-          </td>
-        </tr>`;
-      })
-      .join("")}</tbody>`;
+  el.innerHTML = `
+    <div class="dl" style="--cols:${DEAL_COLS}">
+      <div class="dl-head">
+        <span>Client</span><span>Project</span><span>Status</span>
+        <span style="text-align:right">Deal value</span><span style="text-align:right">Your cut</span>
+      </div>
+      ${rows.map(dealRow).join("")}
+    </div>`;
+}
+
+function dealRow(d) {
+  const value = d.agreedKobo || d.quotedKobo;
+  return `
+    <div class="dl-row">
+      <div class="dl-cell primary">
+        <div class="t">${esc(d.clientName)}</div>
+        ${d.clientCompany ? `<div class="s">${esc(d.clientCompany)}</div>` : ""}
+      </div>
+      <div class="dl-cell">
+        <span class="dl-k">Project</span>
+        <div><div class="t" style="font-weight:500">${esc(d.title)}</div>
+        <div class="s ref">${esc(d.ref)} · ${when(d.createdAt)}</div></div>
+      </div>
+      <div class="dl-cell">
+        <span class="dl-k">Status</span>
+        <div>${pill(d.status)}
+        ${
+          !d.eligible
+            ? `<div class="s" style="color:var(--gold);margin-top:4px">No commission — ${esc(d.ineligibleReason || "ruled out")}</div>`
+            : ""
+        }
+        ${d.lostReason ? `<div class="s" style="margin-top:4px">${esc(d.lostReason)}</div>` : ""}</div>
+      </div>
+      <div class="dl-cell right">
+        <span class="dl-k">Deal value</span>
+        <span class="money">${value ? money(value) : "—"}</span>
+      </div>
+      <div class="dl-cell right">
+        <span class="dl-k">Your cut</span>
+        ${
+          d.earnedKobo
+            ? `<span class="money pos">${money(d.earnedKobo)}</span>`
+            : `<span class="s">${esc(d.commissionPercent)}% when paid</span>`
+        }
+      </div>
+    </div>`;
+}
+
+// A short preview of the ledger on the overview screen.
+function renderRecent() {
+  const won = data.deals.filter((d) => d.earnedKobo > 0).slice(0, 4);
+  $("#recent").innerHTML = won.length
+    ? `<div class="dl" style="--cols:2.4fr 1fr 1fr">
+         <div class="dl-head"><span>Client</span><span>They paid</span>
+           <span style="text-align:right">You earned</span></div>
+         ${won
+           .map(
+             (d) => `<div class="dl-row">
+               <div class="dl-cell primary">
+                 <div class="t">${esc(d.clientName)}</div>
+                 <div class="s ref">${esc(d.ref)}</div>
+               </div>
+               <div class="dl-cell"><span class="dl-k">Client paid</span>
+                 <span class="money">${money(d.paidKobo)}</span></div>
+               <div class="dl-cell right"><span class="dl-k">You earned</span>
+                 <span class="money pos">${money(d.earnedKobo)}</span></div>
+             </div>`
+           )
+           .join("")}
+       </div>`
+    : empty("clock", "Nothing earned yet", "Commission appears the moment a client you introduced makes a payment.");
 }
 
 // ---- wallet ----
@@ -115,86 +171,108 @@ async function loadWallet() {
   wallet = await GET("/api/scout/wallet");
   renderBalances(wallet.balances);
 
-  const entries = wallet.entries;
-  $("#ledgerTable").innerHTML = entries.length
-    ? `<thead><tr><th>Date</th><th>Detail</th><th>Status</th><th class="num">Amount</th></tr></thead>
-       <tbody>${entries
-         .map((e) => {
-           const held = e.available_at && new Date(e.available_at) > new Date();
-           return `<tr>
-             <td>${when(e.created_at)}</td>
-             <td>
-               <div>${esc(e.note || e.type)}</div>
-               ${e.deal_ref ? `<div class="meta">${esc(e.deal_ref)} · ${esc(e.deal_title || "")}</div>` : ""}
-             </td>
-             <td>${held ? `${badge("held")}<div class="meta" style="margin-top:4px">clears ${fromNow(e.available_at)}</div>` : badge("active")}</td>
-             <td class="num money ${e.amount_kobo < 0 ? "neg" : "pos"}">
-               ${e.amount_kobo > 0 ? "+" : ""}${money(e.amount_kobo)}
-             </td>
-           </tr>`;
-         })
-         .join("")}</tbody>`
-    : `<tbody><tr><td><div class="empty">
-         Nothing here yet. Commission shows up as soon as a client you introduced pays.
-       </div></td></tr></tbody>`;
+  const b = wallet.balances;
+  $("#walletTiles").innerHTML = `
+    <div class="tile"><div class="k">Available</div><div class="v jade">${money(b.available)}</div>
+      <div class="n">ready to withdraw</div></div>
+    <div class="tile"><div class="k">On hold</div><div class="v blue">${money(b.pending)}</div>
+      <div class="n">clears ${wallet.settings.holdDays} days after payment</div></div>
+    <div class="tile"><div class="k">Earned</div><div class="v">${money(b.lifetime)}</div>
+      <div class="n">all time</div></div>
+    <div class="tile"><div class="k">Withdrawn</div><div class="v">${money(b.withdrawn)}</div>
+      <div class="n">${b.clawedBack ? money(b.clawedBack) + " clawed back" : "no clawbacks"}</div></div>`;
 
-  const ws = wallet.withdrawals;
-  $("#withdrawalsTable").innerHTML = ws.length
-    ? `<thead><tr><th>Requested</th><th>Account</th><th>Status</th><th class="num">Amount</th></tr></thead>
-       <tbody>${ws
-         .map(
-           (w) => `<tr>
-             <td>${when(w.requested_at)}</td>
-             <td>
-               <div>${esc(w.bank_name || "—")}</div>
-               <div class="meta">${esc(w.account_number || "")}</div>
-             </td>
-             <td>${badge(w.status)}${w.note ? `<div class="meta" style="margin-top:4px">${esc(w.note)}</div>` : ""}</td>
-             <td class="num money">${money(w.amount_kobo)}</td>
-           </tr>`
-         )
-         .join("")}</tbody>`
-    : `<tbody><tr><td><div class="empty">No withdrawals yet.</div></td></tr></tbody>`;
+  const e = wallet.entries;
+  $("#ledgerList").innerHTML = e.length
+    ? `<div class="dl" style="--cols:2.6fr 1.2fr 1fr">
+         <div class="dl-head"><span>Detail</span><span>Status</span><span style="text-align:right">Amount</span></div>
+         ${e.map(ledgerRow).join("")}
+       </div>`
+    : empty("cash", "Your wallet is empty", "Commission shows up here as soon as a client you introduced pays.");
+
+  const w = wallet.withdrawals;
+  $("#withdrawalsList").innerHTML = w.length
+    ? `<div class="dl" style="--cols:2fr 1.6fr 1.2fr 1fr">
+         <div class="dl-head"><span>Requested</span><span>Account</span><span>Status</span><span style="text-align:right">Amount</span></div>
+         ${w
+           .map(
+             (x) => `<div class="dl-row">
+               <div class="dl-cell primary"><div class="t">${when(x.requested_at)}</div>
+                 <div class="s">Withdrawal #${x.id}</div></div>
+               <div class="dl-cell"><span class="dl-k">Account</span>
+                 <div><div>${esc(x.bank_name || "—")}</div>
+                 <div class="s mono">${esc(x.account_number || "")}</div></div></div>
+               <div class="dl-cell"><span class="dl-k">Status</span>
+                 <div>${pill(x.status)}${x.note ? `<div class="s" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div></div>
+               <div class="dl-cell right"><span class="dl-k">Amount</span>
+                 <span class="money">${money(x.amount_kobo)}</span></div>
+             </div>`
+           )
+           .join("")}
+       </div>`
+    : empty("out", "No withdrawals yet", "Once your balance clears its hold you can send it to your bank.");
 }
 
-$("#withdrawBtn").onclick = () => {
+function ledgerRow(e) {
+  const held = e.available_at && new Date(e.available_at) > new Date();
+  return `
+    <div class="dl-row">
+      <div class="dl-cell primary">
+        <div class="t" style="font-weight:500">${esc(e.note || e.type)}</div>
+        <div class="s">${e.deal_ref ? `<span class="ref">${esc(e.deal_ref)}</span> · ` : ""}${when(e.created_at)}</div>
+      </div>
+      <div class="dl-cell">
+        <span class="dl-k">Status</span>
+        <div>${held ? pill("held") : pill("cleared")}
+        ${held ? `<div class="s" style="margin-top:4px">clears ${fromNow(e.available_at)}</div>` : ""}</div>
+      </div>
+      <div class="dl-cell right">
+        <span class="dl-k">Amount</span>
+        <span class="money ${e.amount_kobo < 0 ? "neg" : "pos"}">${e.amount_kobo > 0 ? "+" : ""}${money(e.amount_kobo)}</span>
+      </div>
+    </div>`;
+}
+
+// ---- withdraw ----
+function openWithdraw() {
   const b = wallet?.balances || data.balances;
   const min = wallet?.settings.minWithdrawalKobo ?? data.settings.minWithdrawalKobo;
 
+  if (!data.scout.bank.accountNumber) {
+    toast("Add your payout account first.", true);
+    return navigate("account", onView);
+  }
   if (b.available < min) {
     return toast(
       b.available <= 0
         ? "Nothing available to withdraw yet."
-        : `You need at least ${money(min)} available.`,
+        : `You need at least ${money(min)} available — you have ${money(b.available)}.`,
       true
     );
   }
-  if (!data.scout.bank.accountNumber) {
-    toast("Add your payout account first.", true);
-    return show("account");
-  }
 
-  modal({
+  sheet({
     title: "Withdraw commission",
-    sub: `${money(b.available)} available · paid to ${esc(data.scout.bank.bankName)} ${esc(
-      data.scout.bank.accountNumber
-    )}`,
-    html: `<div class="field">
-             <label for="wdAmount">Amount (₦)</label>
-             <input id="wdAmount" inputmode="decimal" value="${Math.floor(b.available / 100)}" />
-             <div class="help">Minimum ${money(min)}</div>
-           </div>`,
+    sub: `Sent to ${esc(data.scout.bank.bankName)} · ${esc(data.scout.bank.accountNumber)}`,
+    html: `
+      <div class="field">
+        <label for="wdAmount">Amount</label>
+        <div class="naira"><input id="wdAmount" inputmode="decimal" value="${naira(b.available)}" /></div>
+        <span class="help">${money(b.available)} available · minimum ${money(min)}</span>
+      </div>`,
     confirmLabel: "Request withdrawal",
     onConfirm: async (root) => {
-      const r = await POST("/api/scout/withdrawals", {
-        amount: $("#wdAmount", root).value,
-      });
+      const r = await POST("/api/scout/withdrawals", { amount: $("#wdAmount", root).value });
       data.balances = r.balances;
+      renderBalances(r.balances);
       await loadWallet();
       toast("Withdrawal requested — we'll process it shortly.");
     },
   });
-};
+}
+
+$("#withdrawBtn").onclick = openWithdraw;
+$("#withdrawBtn2").onclick = openWithdraw;
 
 $("#bankForm").onsubmit = async (e) => {
   e.preventDefault();
@@ -211,37 +289,33 @@ $("#bankForm").onsubmit = async (e) => {
   })();
 };
 
-// ---- navigation ----
-function show(view) {
-  $$("section[data-panel]").forEach((s) => {
-    s.style.display = s.dataset.panel === view ? "" : "none";
-  });
-  $$("nav button[data-view]").forEach((b) =>
-    b.classList.toggle("active", b.dataset.view === view)
-  );
-  if (view === "wallet") loadWallet().catch((e) => toast(e.message, true));
-}
-$$("nav button[data-view]").forEach((b) => (b.onclick = () => show(b.dataset.view)));
-
+// ---- sharing ----
 $("#copyUrl").onclick = () => copy($("#inviteUrl").value, "Invite link copied");
 $("#shareUrl").onclick = async () => {
   const url = $("#inviteUrl").value;
   const text = "Need a website or app built? Meji Builds does great work — start here:";
-  // navigator.share only exists on mobile/HTTPS; fall back to the clipboard.
   if (navigator.share) {
     try {
       await navigator.share({ title: "Meji Builds", text, url });
       return;
     } catch {
-      /* user dismissed the sheet */
+      /* the user dismissed the share sheet */
     }
   }
   copy(`${text} ${url}`, "Invite message copied");
 };
 
-$("#logout").onclick = async () => {
+// ---- navigation ----
+function onView(view) {
+  if (view === "wallet") loadWallet().catch((e) => toast(e.message, true));
+}
+wireNav(onView);
+
+const signOut = async () => {
   await POST("/api/auth/logout").catch(() => {});
   location.href = "/";
 };
+$("#logoutRail").onclick = signOut;
+$("#logoutBar").onclick = signOut;
 
-load().catch((e) => toast(e.message, true));
+load();

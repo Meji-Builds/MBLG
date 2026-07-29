@@ -1,15 +1,20 @@
 // Shared browser helpers for every Meji Connect page.
-// Plain ES modules-free script — loaded with a <script src> tag, no build step.
+// Plain <script src> — no build step, no modules.
 
 // ---- API ----
 // Every endpoint answers { ok, ... } or { ok:false, error }. api() throws on
-// failure so callers can just try/catch instead of checking a flag each time.
+// failure so callers can try/catch instead of checking a flag each time.
 async function api(method, path, body) {
-  const res = await fetch(path, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let res;
+  try {
+    res = await fetch(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new Error("Can't reach the server. Check your connection and try again.");
+  }
   let json = null;
   try {
     json = await res.json();
@@ -17,7 +22,13 @@ async function api(method, path, body) {
     /* empty or non-JSON body */
   }
   if (!res.ok || !json || json.ok === false) {
-    const err = new Error(json?.error || `Request failed (${res.status})`);
+    // A 500 with no JSON almost always means the database isn't reachable.
+    // Say that, rather than showing a bare status code.
+    const fallback =
+      res.status >= 500
+        ? "The server hit an error. If you're running this locally, check DATABASE_URL in your .env."
+        : `Request failed (${res.status})`;
+    const err = new Error(json?.error || fallback);
     err.status = res.status;
     throw err;
   }
@@ -27,8 +38,8 @@ const GET = (p) => api("GET", p);
 const POST = (p, b) => api("POST", p, b);
 
 // ---- money ----
-// Mirrors lib/money.js formatKobo so the same amount reads identically on the
-// server (emails, system messages) and in the browser.
+// Mirrors lib/money.js formatKobo so an amount reads identically on the server
+// (emails, system messages) and in the browser.
 function money(kobo) {
   if (kobo === null || kobo === undefined) return "—";
   const neg = kobo < 0;
@@ -38,6 +49,7 @@ function money(kobo) {
   const tail = rem === 0 ? "" : "." + String(rem).padStart(2, "0");
   return `${neg ? "-" : ""}₦${naira.toLocaleString("en-NG")}${tail}`;
 }
+const naira = (kobo) => Math.floor(Math.abs(kobo || 0) / 100);
 
 // ---- dates ----
 function when(iso) {
@@ -48,7 +60,6 @@ function when(iso) {
   if (days < 7) return d.toLocaleDateString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
   return d.toLocaleDateString([], { day: "numeric", month: "short", year: "2-digit" });
 }
-// "in 6 days" / "3 days ago" — used for hold countdowns.
 function fromNow(iso) {
   if (!iso) return "";
   const diff = new Date(iso).getTime() - Date.now();
@@ -62,15 +73,48 @@ function fromNow(iso) {
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-// Always use this for anything a user typed. Client names, company names and
-// chat messages all reach the DOM, and none of them are trustworthy.
+// Use for anything a person typed. Client names, company names and chat
+// messages all reach the DOM, and none of them are trustworthy.
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
 }
 
-const STATUS_LABELS = {
+// ---- icons ----
+// Inline 24px stroke icons. Kept here so no page fetches an icon font, which
+// would be blocked on a locked-down network anyway.
+const ICONS = {
+  link: '<path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.8 1.7"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.8-1.7"/>',
+  wallet: '<path d="M19 7V5a2 2 0 00-2-2H5a2 2 0 000 4h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V5"/><circle cx="17" cy="12" r="1.2"/>',
+  people: '<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 5.3a3.2 3.2 0 010 5.4M18 20a6.5 6.5 0 00-2.2-4.9"/>',
+  user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  cash: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>',
+  cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 004 15a2 2 0 010-4 1.6 1.6 0 001.1-2.7l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0011 4.6a2 2 0 014 0 1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1A1.6 1.6 0 0020 11a2 2 0 010 4z"/>',
+  out: '<path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6"/>',
+  chat: '<path d="M21 12a8 8 0 01-11.4 7.2L3 21l1.8-6.6A8 8 0 1121 12z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  alert: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2 18.4A2 2 0 003.7 21.4h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
+  inbox: '<path d="M21 12h-5l-2 3h-4l-2-3H3"/><path d="M5.5 5h13l2.5 7v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6z"/>',
+  send: '<path d="M21 3L3 10.5l7 3 3 7L21 3z"/>',
+  back: '<path d="M15 19l-7-7 7-7"/>',
+};
+const icon = (n, cls = "") =>
+  `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
+
+// Markup declares icons as <i data-icon="wallet"></i> and this swaps in the
+// SVG once the page loads, keeping the HTML readable.
+function hydrateIcons(root = document) {
+  $$("[data-icon]", root).forEach((el) => {
+    el.outerHTML = icon(el.dataset.icon);
+  });
+}
+document.addEventListener("DOMContentLoaded", () => hydrateIcons());
+
+// ---- status ----
+const STATUS = {
   new: "New",
   in_discussion: "In discussion",
   quoted: "Quoted",
@@ -82,15 +126,17 @@ const STATUS_LABELS = {
   processing: "Processing",
   paid: "Paid",
   rejected: "Rejected",
-  pending: "Pending",
+  pending: "Awaiting confirmation",
   success: "Paid",
   refunded: "Refunded",
   active: "Active",
   suspended: "Suspended",
   held: "On hold",
+  cleared: "Cleared",
+  contested: "Contested",
 };
-const badge = (status) =>
-  `<span class="badge ${esc(status)}">${esc(STATUS_LABELS[status] || status)}</span>`;
+const pill = (s, label) =>
+  `<span class="pill ${esc(s)}">${esc(label || STATUS[s] || s)}</span>`;
 
 // ---- toast ----
 let toastTimer;
@@ -99,21 +145,22 @@ function toast(msg, bad = false) {
   if (!el) {
     el = document.createElement("div");
     el.className = "toast";
+    el.setAttribute("role", "status");
     document.body.appendChild(el);
   }
   el.textContent = msg;
   el.classList.toggle("bad", !!bad);
-  el.classList.add("show");
+  el.classList.add("is-on");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 3600);
+  toastTimer = setTimeout(() => el.classList.remove("is-on"), 4000);
 }
 
-// Wrap a click handler so the button disables while it runs. Stops the
-// double-submit that would otherwise create two withdrawals or two payments.
+// Disable a button while its handler runs, so a double-tap can't create two
+// withdrawals or two payments.
 function busy(btn, fn) {
   return async (...args) => {
     if (btn.disabled) return;
-    const label = btn.textContent;
+    const label = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = "Working…";
     try {
@@ -122,7 +169,7 @@ function busy(btn, fn) {
       toast(e.message, true);
     } finally {
       btn.disabled = false;
-      btn.textContent = label;
+      btn.innerHTML = label;
     }
   };
 }
@@ -132,44 +179,78 @@ async function copy(text, label = "Copied") {
     await navigator.clipboard.writeText(text);
     toast(label);
   } catch {
-    toast("Copy failed — select and copy manually", true);
+    toast("Couldn't copy — select the text and copy it manually", true);
   }
 }
 
-// ---- modal ----
-function modal({ title, sub, html, confirmLabel = "Confirm", onConfirm }) {
-  let bg = $(".modal-bg");
-  if (!bg) {
-    bg = document.createElement("div");
-    bg.className = "modal-bg";
-    document.body.appendChild(bg);
+// ---- dialog ----
+// A centred sheet on desktop, a bottom sheet on phones. Escape and a click on
+// the scrim both close it.
+function sheet({ title, sub, html, confirmLabel = "Confirm", danger, onConfirm }) {
+  let scrim = $(".scrim");
+  if (!scrim) {
+    scrim = document.createElement("div");
+    scrim.className = "scrim";
+    document.body.appendChild(scrim);
   }
-  bg.innerHTML = `
-    <div class="modal">
+  scrim.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
       <h3>${esc(title)}</h3>
-      ${sub ? `<div class="sub">${sub}</div>` : ""}
-      <div class="modal-body">${html || ""}</div>
-      <div class="modal-actions">
-        <button class="ghost" data-close>Cancel</button>
-        <button data-confirm>${esc(confirmLabel)}</button>
+      ${sub ? `<span class="sub">${sub}</span>` : ""}
+      <div class="sheet-body">${html || ""}</div>
+      <div class="sheet-actions">
+        <button class="btn ghost" data-close>Cancel</button>
+        <button class="btn ${danger ? "danger" : ""}" data-go>${esc(confirmLabel)}</button>
       </div>
     </div>`;
-  bg.classList.add("show");
-  const close = () => bg.classList.remove("show");
-  $("[data-close]", bg).onclick = close;
-  bg.onclick = (e) => { if (e.target === bg) close(); };
-  const confirmBtn = $("[data-confirm]", bg);
-  confirmBtn.onclick = busy(confirmBtn, async () => {
-    const ok = await onConfirm(bg);
+  scrim.classList.add("is-on");
+
+  const close = () => {
+    scrim.classList.remove("is-on");
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+
+  $("[data-close]", scrim).onclick = close;
+  scrim.onclick = (e) => { if (e.target === scrim) close(); };
+
+  const go = $("[data-go]", scrim);
+  go.onclick = busy(go, async () => {
+    const ok = await onConfirm(scrim);
     if (ok !== false) close();
   });
-  const firstInput = $("input, textarea, select", bg);
-  if (firstInput) firstInput.focus();
-  return { close, root: bg };
+
+  const first = $("input, textarea, select", scrim);
+  if (first) setTimeout(() => first.focus(), 60);
+  return { close, root: scrim };
 }
 
-// ---- chat rendering, shared by the client portal and the admin console ----
-// `mine` names the sender_type that should appear on the right.
+// ---- empty state ----
+const empty = (ico, title, body) => `
+  <div class="empty">
+    <div class="ico">${icon(ico)}</div>
+    <h3>${esc(title)}</h3>
+    <p>${esc(body)}</p>
+  </div>`;
+
+const skeleton = (n = 3) =>
+  Array.from({ length: n }, () => `<div class="skel skel-row"></div>`).join("");
+
+// ---- navigation shared by the rail and the mobile tab bar ----
+// Both controls drive the same view, so they can never disagree about which
+// one is active.
+function navigate(view, onChange) {
+  $$("[data-view]").forEach((b) => b.classList.toggle("is-on", b.dataset.view === view));
+  $$("[data-panel]").forEach((s) => s.classList.toggle("hidden", s.dataset.panel !== view));
+  window.scrollTo({ top: 0 });
+  if (onChange) onChange(view);
+}
+function wireNav(onChange) {
+  $$("[data-view]").forEach((b) => (b.onclick = () => navigate(b.dataset.view, onChange)));
+}
+
+// ---- chat ----
 function renderThread(container, messages, mine) {
   container.innerHTML = messages
     .map((m) => {
@@ -185,8 +266,8 @@ function renderThread(container, messages, mine) {
   container.scrollTop = container.scrollHeight;
 }
 
-// Poll a thread endpoint, appending only what's new. Serverless can't hold a
-// WebSocket open, so this is how the chat stays live.
+// Poll for new messages, appending only what's new. Serverless functions can't
+// hold a WebSocket open, so this is how the thread stays live.
 function pollThread({ container, url, mine, intervalMs = 4000 }) {
   let since = 0;
   let all = [];
@@ -207,11 +288,30 @@ function pollThread({ container, url, mine, intervalMs = 4000 }) {
   }
   tick();
   const timer = setInterval(tick, intervalMs);
-  // Catch up immediately when the user comes back to the tab.
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+  const onVis = () => { if (!document.hidden) tick(); };
+  document.addEventListener("visibilitychange", onVis);
+
   return {
     refresh: tick,
-    stop() { stopped = true; clearInterval(timer); },
+    stop() {
+      stopped = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    },
     push(msg) { all.push(msg); since = msg.id; renderThread(container, all, mine); },
   };
+}
+
+// Enter sends, Shift+Enter makes a new line, and the box grows with the text.
+function wireComposer(textarea, send) {
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(textarea.scrollHeight, 150) + "px";
+  });
 }
