@@ -188,11 +188,27 @@ email working.
 
 ---
 
-## Changing the look
+## Branding
 
-Every colour lives in the `:root` block at the top of `public/styles.css`.
-Change those values to match the Meji Builds site; no other file hard-codes a
-colour.
+The palette, typeface and monogram are taken from the Meji Builds site's own
+design tokens (`src/app/globals.css` in `meji-builds/meji-builds`), so this is
+the same brand rather than one that merely rhymes with it:
+
+- **Ground** the navy ramp, `#060b18` through `#22345c`
+- **Gold** `#e7b04b`, which is also the primary action colour here, because on
+  this platform the commission is the product
+- **Blue** `#5b9dff`, which doubles as the "waiting" state (pending, on hold)
+- **Type** Geist and Geist Mono, self-hosted in `public/fonts` so no CDN is
+  involved and nothing can be blocked at the network layer
+- **Mark** the real MB monogram, `public/favicon.svg`
+
+Two states the brand has no token for are added and tuned against navy: jade
+`#35c98d` for cleared money and coral `#ff6b6b` for debt. Everything lives in
+the `:root` block at the top of `public/styles.css`; no component hard-codes a
+colour, so keeping in step with a site redesign is a one-block edit.
+
+If the studio site's tokens change, re-read that file and update `:root` to
+match.
 
 ---
 

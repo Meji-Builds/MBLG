@@ -10,8 +10,31 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const css = fs.readFileSync(path.join(ROOT, "public", "styles.css"), "utf8");
 const out = process.argv[2] || path.join(ROOT, "prototype.html");
+
+// The prototype is one file, so same-origin asset URLs like /fonts/Geist.woff2
+// and /favicon.svg have nothing to resolve against. Rewrite each to a data URI
+// as the stylesheet is inlined, which also keeps the page working under a
+// strict content-security policy that blocks every external host.
+const asset = (rel, mime) => {
+  const buf = fs.readFileSync(path.join(ROOT, "public", rel));
+  return `data:${mime};base64,${buf.toString("base64")}`;
+};
+
+const css = fs
+  .readFileSync(path.join(ROOT, "public", "styles.css"), "utf8")
+  .replace(
+    /url\("\/fonts\/Geist-Variable\.woff2"\)/g,
+    `url("${asset("fonts/Geist-Variable.woff2", "font/woff2")}")`
+  )
+  .replace(
+    /url\("\/fonts\/GeistMono-Variable\.woff2"\)/g,
+    `url("${asset("fonts/GeistMono-Variable.woff2", "font/woff2")}")`
+  )
+  .replace(
+    /url\("\/favicon\.svg"\)/g,
+    `url("${asset("favicon.svg", "image/svg+xml")}")`
+  );
 
 const shell = `<title>Meji Connect · Interactive prototype</title>
 <style>
@@ -69,7 +92,7 @@ const body = String.raw`
       <div>
         <section class="hero">
           <span class="eyebrow">Referral programme</span>
-          <h1>Know someone who needs <span class="gold">building</span>?</h1>
+          <h1>Know someone who needs <span class="gradient-gold">building</span>?</h1>
           <p class="lead">Introduce them to Meji Builds. When their project closes, you earn
             <strong>10%</strong> of everything they pay, tracked from the first
             introduction to the money reaching your account.</p>
