@@ -45,10 +45,25 @@ function onView(view) {
   $("#overview").classList.toggle("hidden", view === "deal");
   if (poll && view !== "deal") { poll.stop(); poll = null; }
   if (view !== "deal") openDealId = null;
+  pipelinePoll(view === "pipeline");
   if (view === "pipeline") loadDeals();
   if (view === "payouts") loadPayouts();
   if (view === "scouts") loadScouts();
   if (view === "settings") loadSettings();
+}
+
+// The pipeline list used to only ever load once per visit — a payment landing,
+// a client accepting a quote, none of it showed up until the admin re-clicked
+// into the tab. Polls it quietly in the background instead: no skeleton, no
+// scroll jump, just a fresh table every few seconds while it's the open view.
+let pipelineTimer = null;
+function pipelinePoll(on) {
+  clearInterval(pipelineTimer);
+  pipelineTimer = null;
+  if (!on) return;
+  pipelineTimer = setInterval(() => {
+    if (!document.hidden) { loadDeals(true); refreshOverview(); }
+  }, 8000);
 }
 wireNav(onView);
 $("#backBtn").onclick = () => navigate("pipeline", onView);
@@ -76,9 +91,9 @@ $$("#statusFilter button").forEach((b) => {
   };
 });
 
-async function loadDeals() {
+async function loadDeals(background = false) {
   const el = $("#dealsList");
-  el.innerHTML = skeleton(4);
+  if (!background) el.innerHTML = skeleton(4);
   const r = await GET(`/api/admin/deals?status=${encodeURIComponent(statusFilter)}`);
   if (!r.deals.length) {
     el.innerHTML = empty("inbox", "Nothing here", "No deals match this filter yet.");

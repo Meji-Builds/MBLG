@@ -46,6 +46,36 @@ async function load() {
   renderTiles();
   renderDeals();
   renderRecent();
+  startLivePoll();
+}
+
+// Nothing here used to refresh itself — a Scout had to reload the page to see
+// a deal move from "quoted" to "won", or a new commission land. Re-pulls the
+// dashboard (and the wallet, if that's the open tab) on a timer. Deliberately
+// leaves the account/bank-details fields alone: refreshing them mid-edit would
+// overwrite whatever the Scout is in the middle of typing.
+let liveTimer = null;
+function startLivePoll() {
+  if (liveTimer) return;
+  liveTimer = setInterval(() => {
+    if (!document.hidden) refreshLive();
+  }, 15000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshLive();
+  });
+}
+
+async function refreshLive() {
+  try {
+    data = await GET("/api/scout/dashboard");
+    renderBalances(data.balances);
+    renderTiles();
+    renderDeals();
+    renderRecent();
+    if (currentView === "wallet") await loadWallet();
+  } catch {
+    /* transient — the next tick retries */
+  }
 }
 
 function renderBalances(b) {
@@ -306,7 +336,9 @@ $("#shareUrl").onclick = async () => {
 };
 
 // ---- navigation ----
+let currentView = "overview";
 function onView(view) {
+  currentView = view;
   if (view === "wallet") loadWallet().catch((e) => toast(e.message, true));
 }
 wireNav(onView);

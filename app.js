@@ -70,11 +70,12 @@ app.post(
     if (!event) return res.json({ ok: true, ignored: true });
 
     if (event.kind === "payment") {
-      await settlePayment(event.reference, {
+      const result = await settlePayment(event.reference, {
         amountKobo: event.amountKobo,
         paidAt: event.paidAt,
         actor: { type: "system", label: "paystack-webhook" },
       });
+      await announceSettledPayment(result);
     } else if (event.kind === "refund") {
       await refundPayment(event.reference, {
         actor: { type: "system", label: "paystack-webhook" },
@@ -850,11 +851,12 @@ app.post(
       if (pay.name === "paystack" && pay.verifyTransaction) {
         const check = await pay.verifyTransaction(reference);
         if (check.status === "success") {
-          await settlePayment(reference, {
+          const result = await settlePayment(reference, {
             amountKobo: check.amountKobo,
             paidAt: check.paidAt,
             actor: { type: "client", label: req.client.email || String(req.client.id) },
           });
+          await announceSettledPayment(result);
         }
       }
     }
@@ -1435,6 +1437,7 @@ app.post(
       actor: { type: "admin", id: req.admin.id, label: req.admin.email },
     });
     if (!out) return res.status(400).json({ ok: false, error: "That payment is already settled." });
+    await announceSettledPayment(out);
     res.json({ ok: true, ...out });
   })
 );
@@ -1491,8 +1494,25 @@ async function settlePayment(reference, { amountKobo, paidAt, actor } = {}) {
       amount_kobo: settled.amount_kobo,
       commission_kobo: entry?.amount_kobo || 0,
     });
-    return { payment: settled, commission: entry };
+    return { payment: settled, commission: entry, dealId: deal.id };
   });
+}
+
+// A payment settling automatically (webhook or the client's own return-trip
+// verification) used to update the database with no visible trace anywhere —
+// the admin's open deal view has no other signal to react to, so it just sat
+// showing "unpaid" until they reloaded, which is exactly what led an admin to
+// record the same payment by hand a second time. This posts the same kind of
+// system message the manual "record payment" path already posts, so the
+// admin sees it in the conversation and the existing live-refresh wiring
+// (onNew → refreshDealTop) picks it up automatically.
+async function announceSettledPayment(result) {
+  if (!result) return;
+  await postMessage(
+    result.dealId,
+    { type: "system" },
+    `Payment of ${formatKobo(result.payment.amount_kobo)} received via ${result.payment.provider}.`
+  );
 }
 
 // Refund a settled payment and claw back the commission it produced.

@@ -149,6 +149,7 @@ npm start                # in one terminal
 npm run test:ledger      # in another
 npm run test:messages
 npm run test:quotes
+npm run test:payments
 ```
 
 `scripts/check-flow.js` drives the real HTTP API exactly as a browser would and
@@ -167,6 +168,12 @@ original message, never insert a second one.
 a quote besides accepting it — decline it outright, or ask for changes
 without closing the deal — plus the guards that keep either one from being
 called on a deal that's already moved on.
+
+`scripts/check-payment-visibility.js` proves a payment that settles on its
+own — a Paystack webhook, or an admin confirming one — posts the same
+"payment received" message the manual record-payment flow already does
+(replays don't double-post it), and that the admin's pipeline list and open
+deal view reflect it without anyone reloading or re-recording it by hand.
 
 ---
 

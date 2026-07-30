@@ -11,7 +11,8 @@
     "prototype": "node scripts/build-prototype.js",
     "test:ledger": "node scripts/check-flow.js",
     "test:messages": "node scripts/check-message-idempotency.js",
-    "test:quotes": "node scripts/check-quote-response.js"
+    "test:quotes": "node scripts/check-quote-response.js",
+    "test:payments": "node scripts/check-payment-visibility.js"
   },
   "license": "UNLICENSED",
   "dependencies": {
