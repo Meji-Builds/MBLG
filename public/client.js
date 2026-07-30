@@ -28,6 +28,7 @@ async function boot() {
     }
     renderTabs();
     select(deals[0].id);
+    await confirmReturnFromPaystack();
   } catch {
     $("#loading").classList.add("hidden");
     $("#denied").classList.remove("hidden");
@@ -60,6 +61,33 @@ function select(id) {
     // was at page load, because nothing was re-checking the deal itself.
     onNew: () => refreshCurrentDeal(id),
   });
+}
+
+// Paystack redirects back here with ?paid=1&reference=... . Rather than
+// blindly waiting a couple of seconds and hoping the webhook has landed by
+// then, ask Paystack directly whether the transaction succeeded — that's
+// authoritative immediately, and doesn't depend on the webhook URL being
+// configured at all.
+async function confirmReturnFromPaystack() {
+  const params = new URLSearchParams(location.search);
+  if (!params.get("paid")) return;
+  const reference = params.get("reference") || params.get("trxref");
+  history.replaceState({}, "", location.pathname);
+  if (!reference) return;
+
+  toast("Confirming your payment…");
+  try {
+    const r = await POST(`/api/client/payments/${encodeURIComponent(reference)}/verify`, {});
+    if (r.status === "success") {
+      if (current?.id !== r.dealId) select(r.dealId);
+      else await refreshCurrentDeal(r.dealId);
+      toast("Payment confirmed. Thank you!");
+    } else {
+      toast("Still confirming your payment — this updates on its own in a moment.");
+    }
+  } catch {
+    toast("Couldn't confirm the payment yet. It'll update automatically shortly.", true);
+  }
 }
 
 // Re-pulls this deal's own state (status, quoted/agreed amount, payments) and
@@ -294,12 +322,5 @@ $("#logout").onclick = async () => {
   await POST("/api/auth/logout").catch(() => {});
   location.href = "/";
 };
-
-// Returning from a Paystack redirect: the webhook may still be in flight, so
-// give it a moment before reloading payment state.
-if (new URLSearchParams(location.search).get("paid")) {
-  toast("Payment received. Confirming now.");
-  setTimeout(() => location.replace("/client.html"), 2500);
-}
 
 boot();

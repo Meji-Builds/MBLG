@@ -30,6 +30,19 @@
   font-style: normal;
   font-display: swap;
 }
+/* Geist Mono has no glyph for ₦ (U+20A6) — every price rendered in the mono
+   font (the .money class, the big offer price) showed a tofu box instead.
+   A second face under the same family name, scoped to just that one code
+   point, pulls the glyph from Geist (the sans face, which does have it)
+   while every other mono character still comes from Geist Mono. */
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+20A6;
+}
 
 :root {
   /* Ground: the studio's navy ramp. */

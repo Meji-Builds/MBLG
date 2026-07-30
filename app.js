@@ -826,6 +826,47 @@ app.post(
   })
 );
 
+// A client's browser calling back in right after a Paystack redirect. Checks
+// the transaction with Paystack directly instead of only waiting on the
+// webhook — the webhook can be slow, or never arrive at all if the URL isn't
+// set in the Paystack dashboard, and a real payment must not sit looking
+// unpaid because of that. Idempotent: settlePayment() is a no-op if the
+// webhook already settled it first.
+app.post(
+  "/api/client/payments/:reference/verify",
+  auth.requireClient,
+  wrap(async (req, res) => {
+    const reference = clean(req.params.reference, 200);
+    const { rows } = await db.q(
+      `SELECT p.* FROM payments p JOIN deals d ON d.id = p.deal_id
+       WHERE p.provider_ref = $1 AND d.client_id = $2`,
+      [reference, req.client.id]
+    );
+    const payment = rows[0];
+    if (!payment) return res.status(404).json({ ok: false, error: "Payment not found." });
+
+    if (payment.status !== "success") {
+      const pay = provider();
+      if (pay.name === "paystack" && pay.verifyTransaction) {
+        const check = await pay.verifyTransaction(reference);
+        if (check.status === "success") {
+          await settlePayment(reference, {
+            amountKobo: check.amountKobo,
+            paidAt: check.paidAt,
+            actor: { type: "client", label: req.client.email || String(req.client.id) },
+          });
+        }
+      }
+    }
+
+    const { rows: after } = await db.q(
+      `SELECT status, deal_id FROM payments WHERE provider_ref = $1`,
+      [reference]
+    );
+    res.json({ ok: true, status: after[0].status, dealId: after[0].deal_id });
+  })
+);
+
 // A deal row the caller is actually allowed to see.
 async function ownedDeal(id, { clientId, scoutId } = {}) {
   const params = [Number(id)];
