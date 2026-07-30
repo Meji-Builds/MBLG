@@ -174,6 +174,27 @@ function busy(btn, fn) {
   };
 }
 
+// Upgrades a genuinely relative path (e.g. "/r/CODE") to an absolute URL
+// before it reaches navigator.share or an href.
+//
+// This does NOT catch a scheme-less domain like "site.app/r/CODE" — the URL
+// parser can't tell that apart from an actual relative path, and resolves it
+// against the current page exactly like a relative path would, silently
+// producing "https://current-page.app/site.app/r/CODE". That was the real bug
+// reported in production: PUBLIC_BASE_URL was set without "https://", and
+// navigator.share's relative-URL resolution turned it into a doubled path.
+// The only real fix for that shape is config.js's normalizeBaseUrl, which
+// guarantees the server never emits a scheme-less URL in the first place.
+// This helper stays as a safety net for the narrower, still-real case of an
+// actually-relative path slipping through client-side.
+function absolutize(url) {
+  try {
+    return new URL(url, location.origin).href;
+  } catch {
+    return url;
+  }
+}
+
 async function copy(text, label = "Copied") {
   try {
     await navigator.clipboard.writeText(text);

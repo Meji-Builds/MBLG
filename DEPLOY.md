@@ -111,9 +111,17 @@ Steps 1 to 4 involve no real money and no real people.
 4. **Deploy**, then copy the URL Vercel gives you
    (`https://meji-connect-xyz.vercel.app`).
 5. Go back to **Settings → Environment Variables**, add
-   `PUBLIC_BASE_URL` set to that exact URL, and **Redeploy**. Invite links and
-   client portal links are built from it, so this must match the domain people
-   actually open.
+   `PUBLIC_BASE_URL` set to that exact URL **including `https://`**, and
+   **Redeploy**. Invite links and client portal links are built from it, so
+   this must match the domain people actually open.
+
+   > Vercel's own dashboard displays your domain as bare text
+   > (`meji-connect.vercel.app`), which is exactly what gets copied by
+   > habit — but a value pasted without `https://` breaks invite links shared
+   > through a native "Share" button (WhatsApp, etc.), even though copy-paste
+   > still works. The app auto-corrects a missing scheme and logs a warning
+   > if it has to, but setting it right avoids the warning and is one less
+   > thing to think about.
 
 ### First login
 

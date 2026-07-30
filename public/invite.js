@@ -19,7 +19,13 @@ GET(`/api/invite/${encodeURIComponent(code)}`)
     $("#referrer").textContent = r.scoutName;
     document.title = `${r.scoutName} invited you · Meji Builds`;
   })
-  .catch(() => show("invalid"));
+  .catch(() => {
+    show("invalid");
+    // Shows exactly what code the page tried, so a real mismatch (mistyped,
+    // stale, or a Scout account that no longer exists) is visible on screen
+    // instead of a silent guess.
+    $("#invalidCode").textContent = code ? `Code tried: ${code}` : "No code was found in this link.";
+  });
 
 $("#intake").onsubmit = async (e) => {
   e.preventDefault();
@@ -40,7 +46,7 @@ $("#intake").onsubmit = async (e) => {
     // a client must never be locked out because a mail provider is missing.
     show("done");
     $("#portalUrl").value = r.portalUrl;
-    $("#goPortal").href = r.portalUrl;
+    $("#goPortal").href = absolutize(r.portalUrl);
     if (!r.emailed) {
       $("#done .notice div").innerHTML =
         "<strong>Your project is open.</strong> Save the link below. It's how you get back in.";

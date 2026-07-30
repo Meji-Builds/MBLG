@@ -292,7 +292,7 @@ $("#bankForm").onsubmit = async (e) => {
 // ---- sharing ----
 $("#copyUrl").onclick = () => copy($("#inviteUrl").value, "Invite link copied");
 $("#shareUrl").onclick = async () => {
-  const url = $("#inviteUrl").value;
+  const url = absolutize($("#inviteUrl").value);
   const text = "Need a website or app built? Start here with Meji Builds:";
   if (navigator.share) {
     try {

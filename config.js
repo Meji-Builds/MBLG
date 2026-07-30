@@ -7,6 +7,33 @@
 // settings table is created.
 require("dotenv").config();
 
+// Guards against the single most damaging misconfiguration for this app: a
+// PUBLIC_BASE_URL pasted without a scheme. Vercel's own dashboard displays a
+// project's domain as bare text ("meji-connect.vercel.app"), which is exactly
+// what someone copies into the env var — and a scheme-less base silently
+// poisons every invite link, portal link and email link built from it.
+//
+// Copy-paste survives it, because WhatsApp's linkifier tolerates a missing
+// scheme. The Web Share API does not: per spec, navigator.share({ url })
+// resolves a scheme-less value as a RELATIVE reference against the current
+// page, which turns "meji-connect.vercel.app/r/CODE" shared from
+// https://meji-connect.vercel.app/scout.html into
+// https://meji-connect.vercel.app/meji-connect.vercel.app/r/CODE — a real bug
+// this shipped with, reported from production. Normalizing once, here, is
+// cheaper than chasing every place a base URL gets used.
+function normalizeBaseUrl(raw) {
+  let url = String(raw || "").trim().replace(/\/+$/, "");
+  if (!url) return url;
+  if (!/^https?:\/\//i.test(url)) {
+    console.warn(
+      `[config] PUBLIC_BASE_URL "${url}" has no scheme — prepending https://. ` +
+        `Set it to "https://${url}" to remove this warning.`
+    );
+    url = `https://${url}`;
+  }
+  return url;
+}
+
 module.exports = {
   brand: {
     // The platform clients and Scouts see.
@@ -21,10 +48,11 @@ module.exports = {
   // Priority: explicit PUBLIC_BASE_URL → Vercel's auto URL → localhost.
   // Invite links and client portal links are built from this, so it must match
   // the domain people actually open.
-  publicBaseUrl:
+  publicBaseUrl: normalizeBaseUrl(
     process.env.PUBLIC_BASE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "http://localhost:3000",
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+      "http://localhost:3000"
+  ),
 
   server: {
     port: Number(process.env.PORT) || 3000,
