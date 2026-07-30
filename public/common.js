@@ -292,17 +292,30 @@ function renderThread(container, messages, mine) {
 function pollThread({ container, url, mine, intervalMs = 4000 }) {
   let since = 0;
   let all = [];
+  let seen = new Set();
   let stopped = false;
+
+  // A poll in flight when push() fires optimistically (right after this
+  // browser's own send succeeds) started with the `since` value from BEFORE
+  // that message existed. Its response, arriving after push() already added
+  // the message, contains that same id again — the two paths race, and
+  // without this guard the message renders twice. `seen` makes appending an
+  // id that's already in `all` a no-op regardless of which path wins the race.
+  function append(msgs) {
+    const fresh = msgs.filter((m) => !seen.has(m.id));
+    if (!fresh.length) return false;
+    for (const m of fresh) seen.add(m.id);
+    all = all.concat(fresh);
+    all.sort((a, b) => a.id - b.id);
+    since = all[all.length - 1].id;
+    return true;
+  }
 
   async function tick() {
     if (stopped || document.hidden) return;
     try {
       const r = await GET(`${url}?since=${since}`);
-      if (r.messages.length) {
-        all = all.concat(r.messages);
-        since = r.messages[r.messages.length - 1].id;
-        renderThread(container, all, mine);
-      }
+      if (r.messages.length && append(r.messages)) renderThread(container, all, mine);
     } catch {
       /* transient — the next tick retries */
     }
@@ -319,7 +332,7 @@ function pollThread({ container, url, mine, intervalMs = 4000 }) {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVis);
     },
-    push(msg) { all.push(msg); since = msg.id; renderThread(container, all, mine); },
+    push(msg) { if (append([msg])) renderThread(container, all, mine); },
   };
 }
 
@@ -335,4 +348,55 @@ function wireComposer(textarea, send) {
     textarea.style.height = "auto";
     textarea.style.height = Math.min(textarea.scrollHeight, 150) + "px";
   });
+}
+
+function nonce() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+// Wires a composer's send button + Enter key to POST a chat message, safe to
+// retry. A mobile connection can drop the response after the server already
+// wrote the row — that reads as a failure here, restores the typed text, and
+// invites exactly the retry that used to create a second, real message.
+//
+// The fix: each outgoing message gets a client-generated reference. Retrying
+// the SAME text (nothing edited since the failed attempt) reuses that same
+// reference; the server's unique index on it means the retry can only ever
+// return the original row, never insert a second one. Typing something new
+// gets a fresh reference, so it's never mistaken for a retry of the old text.
+//
+// getUrl is a function rather than a fixed string because the client portal
+// can switch between projects without re-wiring the composer.
+function wireChat({ box, sendBtn, getUrl, onSent }) {
+  let pendingBody = null;
+  let pendingRef = null;
+
+  async function send() {
+    const body = box.value.trim();
+    if (!body) return;
+    const url = getUrl();
+    if (!url) return;
+
+    const clientRef = body === pendingBody && pendingRef ? pendingRef : nonce();
+
+    box.value = "";
+    box.style.height = "auto";
+    try {
+      const r = await POST(url, { body, clientRef });
+      pendingBody = null;
+      pendingRef = null;
+      onSent(r.message);
+    } catch (e) {
+      box.value = body; // never lose what they typed
+      pendingBody = body;
+      pendingRef = clientRef;
+      toast(e.message, true);
+    }
+  }
+
+  sendBtn.onclick = send;
+  wireComposer(box, send);
+  return { send };
 }

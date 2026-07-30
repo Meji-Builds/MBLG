@@ -603,9 +603,26 @@ input.mono { font-family: var(--mono); }
   padding: 8px 16px;
 }
 
-.composer { display: flex; gap: 10px; margin-top: 15px; align-items: flex-end; }
+/* Pinned to the bottom of the viewport rather than just the bottom of the
+   card. Without this, a phone swipe that starts over .thread scrolls the
+   message list (which stops dead at its own max-height, by design — see
+   overscroll-behavior above) and never reaches the composer sitting in
+   ordinary flow below it, so the input becomes unreachable mid-conversation.
+   Sticky keeps it in view the whole time the card is on screen, the way any
+   chat app's input bar behaves. */
+.composer {
+  display: flex; gap: 10px; align-items: flex-end;
+  position: sticky; bottom: 14px; z-index: 5;
+  margin: 15px -1px -1px; padding: 10px 1px 1px;
+  background: var(--surface);
+}
 .composer textarea { min-height: 46px; max-height: 150px; }
 .composer .btn { flex: none; }
+
+@media (max-width: 900px) {
+  /* Clear the fixed mobile tab bar, or the composer sticks half-hidden behind it. */
+  .composer { bottom: calc(var(--tabbar) + 14px + env(safe-area-inset-bottom)); }
+}
 
 /* ══ OFFER CARD (the quote a client receives) ════════════════════════════ */
 .offer {

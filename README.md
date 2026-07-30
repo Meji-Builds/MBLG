@@ -145,8 +145,9 @@ payout waiting for approval. Sign in as `admin@mejibuilds.com` / `demo12345`.
 ### Verifying the money path
 
 ```bash
-npm start              # in one terminal
-npm run test:ledger    # in another
+npm start                # in one terminal
+npm run test:ledger      # in another
+npm run test:messages
 ```
 
 `scripts/check-flow.js` drives the real HTTP API exactly as a browser would and
@@ -154,6 +155,12 @@ asserts 52 checks across the whole lifecycle: signup, self-referral rejection,
 intake, chat, Scout permission boundaries, quoting, pro-rata accrual, webhook
 replay idempotency, the hold, the concurrent-withdrawal race, payout, refund
 clawback, and first-touch attribution.
+
+`scripts/check-message-idempotency.js` proves a chat message survives a
+dropped response without duplicating: a retry that reuses the same
+client-generated reference (what a real client does when a slow connection
+makes a successful send look like a failure) can only ever return the
+original message, never insert a second one.
 
 ---
 

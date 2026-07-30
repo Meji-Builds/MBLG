@@ -183,13 +183,42 @@ async function dealMoney(deal) {
 // Post a message into a deal thread. `system` messages are how the platform
 // narrates itself into the conversation — quote sent, deal closed, payment
 // received — so the thread doubles as the deal's audit trail for the client.
-async function postMessage(dealId, sender, body) {
+//
+// `clientRef` makes a person-composed message safe to retry: a slow mobile
+// connection can drop the response after the server already wrote the row,
+// which looks like a failure to the sender and invites a manual resend of the
+// same text. Reusing the same clientRef on that resend hits the unique index
+// on (deal_id, client_ref) instead of inserting a second row — the original
+// message comes back either way, so the caller never has to know which
+// attempt actually landed. System messages never pass one; they're
+// server-triggered exactly once, nothing to retry against.
+// Returns { row, isNew }. isNew is false only when clientRef matched an
+// existing message — callers that trigger a side effect per message (the
+// "you have a new message" email, in particular) must check it, or a retried
+// send double-notifies the client even though the thread itself stayed
+// correct.
+async function postMessage(dealId, sender, body, clientRef = null) {
+  if (clientRef) {
+    const { rows } = await db.q(
+      `INSERT INTO messages (deal_id, sender_type, sender_id, sender_name, body, client_ref)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (deal_id, client_ref) WHERE client_ref IS NOT NULL DO NOTHING
+       RETURNING *`,
+      [dealId, sender.type, sender.id || null, sender.name || null, body, clientRef]
+    );
+    if (rows[0]) return { row: rows[0], isNew: true };
+    const existing = await db.q(
+      `SELECT * FROM messages WHERE deal_id = $1 AND client_ref = $2`,
+      [dealId, clientRef]
+    );
+    return { row: existing.rows[0], isNew: false };
+  }
   const { rows } = await db.q(
     `INSERT INTO messages (deal_id, sender_type, sender_id, sender_name, body)
      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
     [dealId, sender.type, sender.id || null, sender.name || null, body]
   );
-  return rows[0];
+  return { row: rows[0], isNew: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -624,10 +653,12 @@ app.post(
     if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
     const body = clean(req.body?.body, 4000);
     if (!body) return res.status(400).json({ ok: false, error: "Message is empty." });
-    const msg = await postMessage(
+    const clientRef = clean(req.body?.clientRef, 80);
+    const { row: msg } = await postMessage(
       deal.id,
       { type: "client", id: req.client.id, name: req.client.name },
-      body
+      body,
+      clientRef
     );
     // Nudge the deal out of 'new' the moment a real conversation starts.
     if (deal.status === "new") {
@@ -1032,10 +1063,12 @@ app.post(
     const deal = await ownedDeal(req.params.id);
     if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
 
-    const msg = await postMessage(
+    const clientRef = clean(req.body?.clientRef, 80);
+    const { row: msg, isNew } = await postMessage(
       deal.id,
       { type: "admin", id: req.admin.id, name: req.admin.name },
-      body
+      body,
+      clientRef
     );
     if (deal.status === "new") {
       await db.q(
@@ -1043,16 +1076,20 @@ app.post(
         [deal.id]
       );
     }
-    const { rows: crows } = await db.q(`SELECT * FROM clients WHERE id = $1`, [deal.client_id]);
-    if (crows[0]) {
-      mailer
-        .sendNewMessageAlert({
-          to: crows[0].email,
-          name: crows[0].name,
-          url: `${baseUrlFrom(req)}/client.html`,
-          from: config.brand.studio,
-        })
-        .catch(() => {});
+    // Skip the email on a deduped retry — the client already has this message
+    // in their thread from the original attempt and does not need telling twice.
+    if (isNew) {
+      const { rows: crows } = await db.q(`SELECT * FROM clients WHERE id = $1`, [deal.client_id]);
+      if (crows[0]) {
+        mailer
+          .sendNewMessageAlert({
+            to: crows[0].email,
+            name: crows[0].name,
+            url: `${baseUrlFrom(req)}/client.html`,
+            from: config.brand.studio,
+          })
+          .catch(() => {});
+      }
     }
     res.json({ ok: true, message: msg });
   })

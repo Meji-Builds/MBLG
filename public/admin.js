@@ -373,22 +373,14 @@ function wireDeal(d) {
     );
   });
 
-  const doSend = async () => {
-    const box = $("#msgBox");
-    const body = box.value.trim();
-    if (!body) return;
-    box.value = "";
-    box.style.height = "auto";
-    try {
-      const r = await POST(`/api/admin/deals/${d.id}/messages`, { body });
-      poll.push(r.message);
-    } catch (e) {
-      box.value = body;
-      toast(e.message, true);
-    }
-  };
-  $("#send").onclick = doSend;
-  wireComposer($("#msgBox"), doSend);
+  // The whole deal card, composer included, is torn down and rebuilt fresh on
+  // every openDeal(), so wiring this each time (rather than once) is correct.
+  wireChat({
+    box: $("#msgBox"),
+    sendBtn: $("#send"),
+    getUrl: () => `/api/admin/deals/${d.id}/messages`,
+    onSent: (m) => poll.push(m),
+  });
 }
 
 // ---- payouts ----

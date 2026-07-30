@@ -191,22 +191,15 @@ function renderPayments() {
 }
 
 // ---- composer ----
-async function send() {
-  const box = $("#msgBox");
-  const body = box.value.trim();
-  if (!body || !current) return;
-  box.value = "";
-  box.style.height = "auto";
-  try {
-    const r = await POST(`/api/client/deals/${current.id}/messages`, { body });
-    poll.push(r.message);
-  } catch (e) {
-    box.value = body; // never lose what they typed
-    toast(e.message, true);
-  }
-}
-$("#send").onclick = send;
-wireComposer($("#msgBox"), send);
+// getUrl re-reads `current` on every send, and onSent reads the module-level
+// `poll` by closure — so this is wired once and stays correct even as the
+// project switcher changes which deal (and which live poll) is active.
+wireChat({
+  box: $("#msgBox"),
+  sendBtn: $("#send"),
+  getUrl: () => current && `/api/client/deals/${current.id}/messages`,
+  onSent: (m) => poll.push(m),
+});
 
 $("#logout").onclick = async () => {
   await POST("/api/auth/logout").catch(() => {});

@@ -155,14 +155,28 @@ function ensureSchema() {
           sender_id   INTEGER,
           sender_name TEXT,
           body        TEXT NOT NULL,
+          client_ref  TEXT,
           created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
           read_by_client_at TIMESTAMPTZ,
           read_by_admin_at  TIMESTAMPTZ
         );
       `);
+      // ALTER, not just the CREATE TABLE above, because this column shipped
+      // after the first release — a database created before it exists needs
+      // this to actually gain the column, since CREATE TABLE IF NOT EXISTS is
+      // a no-op once the table already exists.
+      await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS client_ref TEXT;`);
       await pool.query(
         `CREATE INDEX IF NOT EXISTS idx_messages_deal ON messages(deal_id, id);`
       );
+      // A retried send (a slow connection that drops the response after the
+      // server already wrote the row, or a person tapping Send again because
+      // they saw no confirmation) reuses the same client_ref, so this makes a
+      // duplicate message structurally impossible rather than merely unlikely.
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS uniq_message_client_ref
+        ON messages(deal_id, client_ref) WHERE client_ref IS NOT NULL;
+      `);
 
       // ---- money in ----
       // provider_ref is UNIQUE so a replayed webhook can never create a second
