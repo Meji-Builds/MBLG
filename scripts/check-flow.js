@@ -273,11 +273,13 @@ async function main() {
 
   r = await scout("GET", "/api/scout/wallet");
   check("clawback total recorded", r.body.balances.clawedBack, 80_000 * NAIRA);
-  // Available = released ₦80k − withdrawn ₦80k − clawback ₦80k = −₦80k.
-  // The second ₦20k accrual is still inside its own 10-day hold, so it counts
-  // as pending and correctly does NOT offset the debt yet.
-  check("available goes negative, as a real debt", r.body.balances.available, -80_000 * NAIRA);
-  check("newer accrual stays on hold and doesn't mask the debt", r.body.balances.pending, 20_000 * NAIRA);
+  // The balance instalment in step 11 paid the deal off in full, so its ₦20k
+  // accrual released its hold immediately instead of waiting out 10 days —
+  // there's nothing left for the client to default on. That means it's
+  // already counted as available by the time the refund lands:
+  // released ₦80k − withdrawn ₦80k + released ₦20k − clawback ₦80k = −₦60k.
+  check("available goes negative, as a real debt", r.body.balances.available, -60_000 * NAIRA);
+  check("nothing is left pending — the full-payment release already cleared it", r.body.balances.pending, 0);
 
   r = await scout("POST", "/api/scout/withdrawals", { amount: "5000" });
   check("withdrawals blocked while in debt", r.status, 400);

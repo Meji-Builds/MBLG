@@ -1124,7 +1124,7 @@ app.get(
     const deal = rows[0];
     if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
 
-    const [msgs, pays, money] = await Promise.all([
+    const [msgs, pays, money, hold] = await Promise.all([
       db.q(
         `SELECT id, sender_type, sender_name, body, created_at
          FROM messages WHERE deal_id = $1 ORDER BY id ASC`,
@@ -1132,6 +1132,7 @@ app.get(
       ),
       db.q(`SELECT * FROM payments WHERE deal_id = $1 ORDER BY id DESC`, [deal.id]),
       dealMoney(deal),
+      deal.scout_id ? ledger.heldForDeal(deal.id) : { kobo: 0, earliest: null },
     ]);
     await db.q(
       `UPDATE messages SET read_by_admin_at = now()
@@ -1147,6 +1148,8 @@ app.get(
       projectedCommissionKobo: deal.agreed_amount_kobo
         ? commissionOf(deal.agreed_amount_kobo, deal.commission_rate_bps)
         : null,
+      commissionHoldKobo: hold.kobo,
+      commissionHoldClears: hold.earliest,
     });
   })
 );
@@ -1335,6 +1338,34 @@ app.post(
   })
 );
 
+// Let commission on this deal be withdrawn right now, whatever's left of its
+// hold. This is an internal wallet-timing decision — it doesn't belong in the
+// client-visible conversation, so unlike the other admin actions here it does
+// not post a chat message.
+app.post(
+  "/api/admin/deals/:id/release-hold",
+  auth.requireAdmin,
+  wrap(async (req, res) => {
+    const deal = await ownedDeal(req.params.id);
+    if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
+    if (!deal.scout_id)
+      return res.status(400).json({ ok: false, error: "This deal has no Scout to release a hold for." });
+
+    const released = await db.tx((client) => ledger.releaseHold(client, deal.id));
+    if (!released.length)
+      return res.status(400).json({ ok: false, error: "Nothing on this deal is currently on hold." });
+
+    const totalKobo = released.reduce((sum, e) => sum + Number(e.amount_kobo), 0);
+    await db.audit(
+      { type: "admin", id: req.admin.id, label: req.admin.email },
+      "commission.hold_released",
+      { type: "deal", id: deal.id },
+      { scout_id: deal.scout_id, amount_kobo: totalKobo, entries: released.length }
+    );
+    res.json({ ok: true, releasedKobo: totalKobo });
+  })
+);
+
 // Reassign attribution after settling a contested claim.
 app.post(
   "/api/admin/deals/:id/attribution",
@@ -1408,6 +1439,7 @@ app.post(
         deal,
         holdDays: settings.hold_days,
       });
+      await ledger.releaseHoldIfFullyPaid(client, deal);
       return { payment, entry };
     });
 
@@ -1488,6 +1520,7 @@ async function settlePayment(reference, { amountKobo, paidAt, actor } = {}) {
       deal,
       holdDays: settings.hold_days,
     });
+    await ledger.releaseHoldIfFullyPaid(client, deal);
 
     await db.audit(actor, "payment.settled", { type: "payment", id: settled.id }, {
       deal_id: deal.id,

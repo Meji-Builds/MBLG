@@ -60,7 +60,10 @@ Money attracts gaming. These are deliberate design decisions, not incidental:
 - **Rates are snapshotted per deal.** Promoting a Scout from 10% to 20% changes
   their next deals, never the ones already in flight.
 - **Every amount is held for 10 days after the client's payment clears**, in case
-  of a refund or cancellation.
+  of a refund or cancellation. The hold ends early, automatically, the moment a
+  deal is paid in full — there's nothing left to refund, so nothing left to
+  protect the hold against. An admin can also release a deal's hold by hand at
+  any time from its Money card, whatever's left of the wait.
 - **A refund claws the commission back.** The balance can go negative — that's a
   real debt, and withdrawals stay blocked until future commission clears it.
 - **Withdrawals can't be double-spent.** Requesting a payout locks the Scout row
@@ -150,6 +153,7 @@ npm run test:ledger      # in another
 npm run test:messages
 npm run test:quotes
 npm run test:payments
+npm run test:holds
 ```
 
 `scripts/check-flow.js` drives the real HTTP API exactly as a browser would and
@@ -174,6 +178,11 @@ own — a Paystack webhook, or an admin confirming one — posts the same
 "payment received" message the manual record-payment flow already does
 (replays don't double-post it), and that the admin's pipeline list and open
 deal view reflect it without anyone reloading or re-recording it by hand.
+
+`scripts/check-hold-release.js` covers the two ways a commission hold ends
+early instead of running its full 10 days: an admin releasing it by hand from
+the deal page, and it releasing itself the instant a deal is paid in full —
+including when the balance lands hours after the deposit, same day.
 
 ---
 

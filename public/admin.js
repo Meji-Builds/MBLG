@@ -184,6 +184,12 @@ function dealTopHtml(d, r) {
           }</span></div>
           <div><span class="k">Commission at ${d.commission_rate_bps / 100}%</span>
             <span class="v money">${r.projectedCommissionKobo ? money(r.projectedCommissionKobo) : "—"}</span></div>
+          ${
+            r.commissionHoldKobo
+              ? `<div><span class="k">On hold</span>
+                   <span class="v money">${money(r.commissionHoldKobo)} <span class="s">· clears ${fromNow(r.commissionHoldClears)}</span></span></div>`
+              : ""
+          }
           <div><span class="k">Contact</span><span class="v">${esc(d.client_email)}${d.client_phone ? `<br /><span class="mono">${esc(d.client_phone)}</span>` : ""}</span></div>
           <div><span class="k">Budget hint</span><span class="v">${esc(d.budget_range || "—")}</span></div>
           <div><span class="k">Timeline</span><span class="v">${esc(d.timeline || "—")}</span></div>
@@ -194,6 +200,7 @@ function dealTopHtml(d, r) {
           ${d.status === "won" ? `<button class="btn" id="btnPayment">Record payment</button>` : ""}
           ${!["lost", "cancelled"].includes(d.status) ? `<button class="btn danger" id="btnLost">Mark lost</button>` : ""}
           ${d.scout_id ? `<button class="btn quiet" id="btnEligible">${d.commission_eligible ? "Remove commission" : "Restore commission"}</button>` : ""}
+          ${r.commissionHoldKobo ? `<button class="btn ghost" id="btnReleaseHold">Release hold now</button>` : ""}
         </div>
       </div>
 
@@ -407,6 +414,20 @@ function wireDealButtons(d) {
       },
     });
   });
+
+  on("#btnReleaseHold", () =>
+    sheet({
+      title: "Release this hold now",
+      sub: "The Scout can withdraw it immediately instead of waiting out the rest of the hold. This isn't shown to the client.",
+      html: "",
+      confirmLabel: "Release now",
+      onConfirm: async () => {
+        const r = await POST(`/api/admin/deals/${d.id}/release-hold`);
+        toast(`Released ${money(r.releasedKobo)}.`);
+        reload();
+      },
+    })
+  );
 
   $$("[data-confirm-pay]").forEach((b) => {
     b.onclick = busy(b, async () => {

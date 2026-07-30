@@ -369,29 +369,30 @@ h3 { font-size: 0.92rem; font-weight: 650; }
 .tile .v.gold { color: var(--gold); }
 .tile .v.coral { color: var(--coral); }
 
-/* ══ STATUS PILLS ════════════════════════════════════════════════════════
-   State is encoded in colour AND a leading dot, so it survives greyscale and
+/* ══ STATUS ══════════════════════════════════════════════════════════════
+   A dot and a label, set directly against the page — no filled badge shape.
+   State is still encoded in colour AND the dot, so it survives greyscale and
    colour-blindness rather than relying on hue alone.
    ═══════════════════════════════════════════════════════════════════════ */
 .pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.01em;
-  padding: 4px 10px 4px 8px;
-  border-radius: 100px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.76rem; font-weight: 620; letter-spacing: 0.01em;
   white-space: nowrap;
-  background: var(--surface-3);
   color: var(--text-2);
 }
-.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.pill::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; flex: none;
+}
 
-.pill.new           { background: var(--surface-3); color: var(--text-2); }
-.pill.in_discussion { background: var(--blue-soft);  color: var(--blue); }
-.pill.quoted        { background: var(--gold-soft);  color: var(--gold); }
+.pill.new           { color: var(--text-2); }
+.pill.in_discussion { color: var(--blue); }
+.pill.quoted        { color: var(--gold); }
 .pill.won,
-.pill.paid, .pill.success, .pill.active, .pill.cleared { background: var(--jade-soft); color: var(--jade); }
+.pill.paid, .pill.success, .pill.active, .pill.cleared { color: var(--jade); }
 .pill.lost, .pill.cancelled, .pill.rejected,
-.pill.failed, .pill.refunded, .pill.suspended, .pill.contested { background: var(--coral-soft); color: var(--coral); }
-.pill.pending, .pill.requested, .pill.processing, .pill.held, .pill.approved { background: var(--blue-soft); color: var(--blue); }
+.pill.failed, .pill.refunded, .pill.suspended, .pill.contested { color: var(--coral); }
+.pill.pending, .pill.requested, .pill.processing, .pill.held, .pill.approved { color: var(--blue); }
 
 /* A tag is NOT a pill. Pills carry state, which is why they get a semantic
    colour and a status dot. A tag is a static fact about a record (a commission
