@@ -148,6 +148,7 @@ payout waiting for approval. Sign in as `admin@mejibuilds.com` / `demo12345`.
 npm start                # in one terminal
 npm run test:ledger      # in another
 npm run test:messages
+npm run test:quotes
 ```
 
 `scripts/check-flow.js` drives the real HTTP API exactly as a browser would and
@@ -161,6 +162,11 @@ dropped response without duplicating: a retry that reuses the same
 client-generated reference (what a real client does when a slow connection
 makes a successful send look like a failure) can only ever return the
 original message, never insert a second one.
+
+`scripts/check-quote-response.js` covers the two ways a client can respond to
+a quote besides accepting it — decline it outright, or ask for changes
+without closing the deal — plus the guards that keep either one from being
+called on a deal that's already moved on.
 
 ---
 

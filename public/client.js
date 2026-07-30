@@ -99,8 +99,29 @@ function renderSummary() {
           (${d.depositBps / 100}%) upfront, with the balance due on delivery.
         </p>
         <button class="btn lg full" id="acceptQuote">Accept and start</button>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn ghost" id="requestChanges">Ask for changes</button>
+          <button class="btn quiet" id="declineQuote">Decline</button>
+        </div>
       </div>`;
     $("#acceptQuote").onclick = busy($("#acceptQuote"), acceptQuote);
+    $("#requestChanges").onclick = openRequestChanges;
+    $("#declineQuote").onclick = openDecline;
+    return;
+  }
+
+  if (d.status === "lost" || d.status === "cancelled") {
+    $("#summary").innerHTML = `
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>${esc(d.title)}</h2>
+            <span class="ref">${esc(d.ref)}</span>
+          </div>
+          ${pill(d.status)}
+        </div>
+        <p class="hint">This project isn't moving forward. If that's changed, just send us a message below.</p>
+      </div>`;
     return;
   }
 
@@ -131,6 +152,50 @@ function renderSummary() {
   if (pay) pay.onclick = busy(pay, () => startPayment("deposit"));
   const payFull = $("#payFull");
   if (payFull) payFull.onclick = busy(payFull, () => startPayment("full"));
+}
+
+function openRequestChanges() {
+  sheet({
+    title: "Ask for changes",
+    sub: "Tell us what you'd like different and we'll come back with an updated price.",
+    html: `<div class="field">
+             <label for="rcNote">What would you like changed?</label>
+             <textarea id="rcNote" placeholder="e.g. Could we do this in two phases to spread the cost?"></textarea>
+           </div>`,
+    confirmLabel: "Send",
+    onConfirm: async (root) => {
+      const note = $("#rcNote", root).value.trim();
+      if (!note) { toast("Let us know what you'd like changed.", true); return false; }
+      const r = await POST(`/api/client/deals/${current.id}/request-changes`, { note });
+      deals = deals.map((d) => (d.id === r.deal.id ? r.deal : d));
+      current = r.deal;
+      renderSummary();
+      poll.refresh();
+      toast("Sent — we'll follow up with an updated quote.");
+    },
+  });
+}
+
+function openDecline() {
+  sheet({
+    title: "Decline this quote",
+    sub: "This closes the project. You can still message us later if anything changes.",
+    html: `<div class="field">
+             <label for="dcReason">Let us know why, if you'd like (optional)</label>
+             <input id="dcReason" placeholder="e.g. Went with someone else" />
+           </div>`,
+    confirmLabel: "Decline",
+    danger: true,
+    onConfirm: async (root) => {
+      const reason = $("#dcReason", root).value.trim();
+      const r = await POST(`/api/client/deals/${current.id}/decline`, { reason });
+      deals = deals.map((d) => (d.id === r.deal.id ? r.deal : d));
+      current = r.deal;
+      renderSummary();
+      poll.refresh();
+      toast("Quote declined.");
+    },
+  });
 }
 
 function payActions(d) {

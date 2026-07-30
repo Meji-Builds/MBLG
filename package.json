@@ -10,7 +10,8 @@
     "seed": "node scripts/seed-demo.js",
     "prototype": "node scripts/build-prototype.js",
     "test:ledger": "node scripts/check-flow.js",
-    "test:messages": "node scripts/check-message-idempotency.js"
+    "test:messages": "node scripts/check-message-idempotency.js",
+    "test:quotes": "node scripts/check-quote-response.js"
   },
   "license": "UNLICENSED",
   "dependencies": {

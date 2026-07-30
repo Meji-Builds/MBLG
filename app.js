@@ -707,6 +707,79 @@ app.post(
   })
 );
 
+// The client turning down their own quote. Symmetric with accept: safe to let
+// them do it themselves rather than making them wait on an admin to notice a
+// conversation has gone quiet, and closes the deal the moment it's actually
+// decided rather than leaving it stuck at 'quoted' indefinitely.
+app.post(
+  "/api/client/deals/:id/decline",
+  auth.requireClient,
+  wrap(async (req, res) => {
+    const deal = await ownedDeal(req.params.id, { clientId: req.client.id });
+    if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
+    if (deal.status !== "quoted")
+      return res.status(400).json({ ok: false, error: "There's no active quote to decline." });
+
+    const reason = clean(req.body?.reason, 500);
+    const { rows } = await db.q(
+      `UPDATE deals SET status = 'lost', lost_at = now(), lost_reason = $2, updated_at = now()
+       WHERE id = $1 RETURNING *`,
+      [deal.id, reason]
+    );
+    const updated = rows[0];
+    await postMessage(
+      deal.id,
+      { type: "system" },
+      `${req.client.name} declined the quote of ${formatKobo(deal.quoted_amount_kobo)}.${reason ? ` ${reason}` : ""}`
+    );
+    await db.audit(
+      { type: "client", id: req.client.id, label: req.client.email },
+      "deal.declined",
+      { type: "deal", id: deal.id },
+      { amount_kobo: deal.quoted_amount_kobo, reason }
+    );
+    await notifyScoutOfStatus(updated, "lost", baseUrlFrom(req));
+    res.json({ ok: true, deal: await clientDealView(updated) });
+  })
+);
+
+// The client asking for a different number rather than accepting or declining
+// outright. Reopens the conversation (back to in_discussion) without closing
+// anything — the quoted amount stays on the deal as a record of what was last
+// offered, and the admin's "Send quote" button already relabels itself
+// "Requote" the moment one exists, so no separate UI state is needed for that.
+app.post(
+  "/api/client/deals/:id/request-changes",
+  auth.requireClient,
+  wrap(async (req, res) => {
+    const deal = await ownedDeal(req.params.id, { clientId: req.client.id });
+    if (!deal) return res.status(404).json({ ok: false, error: "Not found." });
+    if (deal.status !== "quoted")
+      return res.status(400).json({ ok: false, error: "There's no active quote to ask about." });
+
+    const note = clean(req.body?.note, 1000);
+    if (!note) return res.status(400).json({ ok: false, error: "Let us know what you'd like changed." });
+
+    const { rows } = await db.q(
+      `UPDATE deals SET status = 'in_discussion', updated_at = now() WHERE id = $1 RETURNING *`,
+      [deal.id]
+    );
+    const updated = rows[0];
+    await postMessage(
+      deal.id,
+      { type: "client", id: req.client.id, name: req.client.name },
+      note
+    );
+    await db.audit(
+      { type: "client", id: req.client.id, label: req.client.email },
+      "deal.requested_changes",
+      { type: "deal", id: deal.id },
+      { previous_quote_kobo: deal.quoted_amount_kobo }
+    );
+    res.json({ ok: true, deal: await clientDealView(updated) });
+  })
+);
+
 // Start a payment. In manual mode this records a pending payment and returns
 // the studio's bank details; in Paystack mode it returns a checkout URL. Either
 // way a `payments` row exists first, so an admin can always see that a client
