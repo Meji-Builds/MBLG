@@ -44,6 +44,7 @@ function onView(view) {
   // The overview tiles are pipeline-level context; hide them inside a deal.
   $("#overview").classList.toggle("hidden", view === "deal");
   if (poll && view !== "deal") { poll.stop(); poll = null; }
+  if (view !== "deal") openDealId = null;
   if (view === "pipeline") loadDeals();
   if (view === "payouts") loadPayouts();
   if (view === "scouts") loadScouts();
@@ -117,14 +118,19 @@ async function loadDeals() {
 }
 
 // ---- one deal ----
-async function openDeal(id) {
-  navigate("deal", onView);
-  $("#dealDetail").innerHTML = skeleton(3);
-  const r = await GET(`/api/admin/deals/${id}`);
-  const d = r.deal;
-  const closed = ["won", "lost", "cancelled"].includes(d.status);
+// The id of whatever deal is currently open, so a background refresh whose
+// request was already in flight when the admin navigated away (or into a
+// different deal) has a cheap way to recognise that and discard its own
+// result instead of overwriting a now-unrelated view.
+let openDealId = null;
 
-  $("#dealDetail").innerHTML = `
+// Everything about a deal that a client's OWN message can change — status,
+// money, notices, the action buttons — as one HTML string. Used both for the
+// first render and for the live background refresh, so the two can never
+// drift out of sync with each other.
+function dealTopHtml(d, r) {
+  const closed = ["won", "lost", "cancelled"].includes(d.status);
+  return `
     <div class="page-head">
       <div>
         <h1>${esc(d.client_name)}</h1>
@@ -147,69 +153,79 @@ async function openDeal(id) {
         : ""
     }
 
-    <div class="grid-2 wide-first">
-      <div class="stack">
-        <div class="card">
-          <div class="card-head"><h2>Money</h2></div>
-          <div class="tiles" style="grid-template-columns:1fr 1fr">
-            <div class="tile"><div class="k">Agreed</div>
-              <div class="v">${d.agreed_amount_kobo ? money(d.agreed_amount_kobo) : d.quoted_amount_kobo ? money(d.quoted_amount_kobo) : "—"}</div>
-              <div class="n">${d.agreed_amount_kobo ? "agreed price" : "quoted, not accepted"}</div></div>
-            <div class="tile"><div class="k">Collected</div><div class="v jade">${money(r.money.paidKobo)}</div>
-              <div class="n">${money(r.money.outstandingKobo)} outstanding</div></div>
-          </div>
-          <div class="kv" style="margin-top:14px">
-            <div><span class="k">Referred by</span><span class="v">${
-              d.scout_name ? `${esc(d.scout_name)} <span class="ref">${esc(d.referral_code)}</span>` : "Direct (no Scout)"
-            }</span></div>
-            <div><span class="k">Commission at ${d.commission_rate_bps / 100}%</span>
-              <span class="v money">${r.projectedCommissionKobo ? money(r.projectedCommissionKobo) : "—"}</span></div>
-            <div><span class="k">Contact</span><span class="v">${esc(d.client_email)}${d.client_phone ? `<br /><span class="mono">${esc(d.client_phone)}</span>` : ""}</span></div>
-            <div><span class="k">Budget hint</span><span class="v">${esc(d.budget_range || "—")}</span></div>
-            <div><span class="k">Timeline</span><span class="v">${esc(d.timeline || "—")}</span></div>
-          </div>
-          <div class="btn-row" style="margin-top:18px">
-            ${!closed ? `<button class="btn" id="btnQuote">${d.quoted_amount_kobo ? "Requote" : "Send quote"}</button>` : ""}
-            ${d.status !== "won" ? `<button class="btn ghost" id="btnWon">Mark won</button>` : ""}
-            ${d.status === "won" ? `<button class="btn" id="btnPayment">Record payment</button>` : ""}
-            ${!["lost", "cancelled"].includes(d.status) ? `<button class="btn danger" id="btnLost">Mark lost</button>` : ""}
-            ${d.scout_id ? `<button class="btn quiet" id="btnEligible">${d.commission_eligible ? "Remove commission" : "Restore commission"}</button>` : ""}
-          </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2>Money</h2></div>
+        <div class="tiles" style="grid-template-columns:1fr 1fr">
+          <div class="tile"><div class="k">Agreed</div>
+            <div class="v">${d.agreed_amount_kobo ? money(d.agreed_amount_kobo) : d.quoted_amount_kobo ? money(d.quoted_amount_kobo) : "—"}</div>
+            <div class="n">${d.agreed_amount_kobo ? "agreed price" : "quoted, not accepted"}</div></div>
+          <div class="tile"><div class="k">Collected</div><div class="v jade">${money(r.money.paidKobo)}</div>
+            <div class="n">${money(r.money.outstandingKobo)} outstanding</div></div>
         </div>
-
-        <div class="card">
-          <div class="card-head"><h2>Brief</h2></div>
-          <p style="margin:0;white-space:pre-wrap">${esc(d.description || "—")}</p>
+        <div class="kv" style="margin-top:14px">
+          <div><span class="k">Referred by</span><span class="v">${
+            d.scout_name ? `${esc(d.scout_name)} <span class="ref">${esc(d.referral_code)}</span>` : "Direct (no Scout)"
+          }</span></div>
+          <div><span class="k">Commission at ${d.commission_rate_bps / 100}%</span>
+            <span class="v money">${r.projectedCommissionKobo ? money(r.projectedCommissionKobo) : "—"}</span></div>
+          <div><span class="k">Contact</span><span class="v">${esc(d.client_email)}${d.client_phone ? `<br /><span class="mono">${esc(d.client_phone)}</span>` : ""}</span></div>
+          <div><span class="k">Budget hint</span><span class="v">${esc(d.budget_range || "—")}</span></div>
+          <div><span class="k">Timeline</span><span class="v">${esc(d.timeline || "—")}</span></div>
         </div>
-
-        ${
-          r.payments.length
-            ? `<div class="card" style="padding:6px 5px">
-                 <div class="card-head" style="padding:14px 12px 0"><h2>Payments</h2></div>
-                 <div class="dl" style="--cols:1.7fr 1fr 1fr 1.2fr">
-                   <div class="dl-head"><span>Date</span><span>Type</span><span style="text-align:right">Amount</span><span></span></div>
-                   ${r.payments
-                     .map(
-                       (p) => `<div class="dl-row">
-                         <div class="dl-cell primary"><div class="t">${when(p.paid_at || p.created_at)}</div>
-                           <div class="s">${pill(p.status)} <span class="ref">${esc(p.provider_ref)}</span></div></div>
-                         <div class="dl-cell"><span class="dl-k">Type</span>
-                           <span style="text-transform:capitalize">${esc(p.kind)}</span></div>
-                         <div class="dl-cell right"><span class="dl-k">Amount</span>
-                           <span class="money">${money(p.amount_kobo)}</span></div>
-                         <div class="dl-cell actions">
-                           ${p.status === "pending" ? `<button class="btn sm" data-confirm-pay="${p.id}">Confirm</button>` : ""}
-                           ${p.status === "success" ? `<button class="btn sm danger" data-refund="${p.id}">Refund</button>` : ""}
-                         </div>
-                       </div>`
-                     )
-                     .join("")}
-                 </div>
-               </div>`
-            : ""
-        }
+        <div class="btn-row" style="margin-top:18px">
+          ${!closed ? `<button class="btn" id="btnQuote">${d.quoted_amount_kobo ? "Requote" : "Send quote"}</button>` : ""}
+          ${d.status !== "won" ? `<button class="btn ghost" id="btnWon">Mark won</button>` : ""}
+          ${d.status === "won" ? `<button class="btn" id="btnPayment">Record payment</button>` : ""}
+          ${!["lost", "cancelled"].includes(d.status) ? `<button class="btn danger" id="btnLost">Mark lost</button>` : ""}
+          ${d.scout_id ? `<button class="btn quiet" id="btnEligible">${d.commission_eligible ? "Remove commission" : "Restore commission"}</button>` : ""}
+        </div>
       </div>
 
+      <div class="card">
+        <div class="card-head"><h2>Brief</h2></div>
+        <p style="margin:0;white-space:pre-wrap">${esc(d.description || "—")}</p>
+      </div>
+
+      ${
+        r.payments.length
+          ? `<div class="card" style="padding:6px 5px">
+               <div class="card-head" style="padding:14px 12px 0"><h2>Payments</h2></div>
+               <div class="dl" style="--cols:1.7fr 1fr 1fr 1.2fr">
+                 <div class="dl-head"><span>Date</span><span>Type</span><span style="text-align:right">Amount</span><span></span></div>
+                 ${r.payments
+                   .map(
+                     (p) => `<div class="dl-row">
+                       <div class="dl-cell primary"><div class="t">${when(p.paid_at || p.created_at)}</div>
+                         <div class="s">${pill(p.status)} <span class="ref">${esc(p.provider_ref)}</span></div></div>
+                       <div class="dl-cell"><span class="dl-k">Type</span>
+                         <span style="text-transform:capitalize">${esc(p.kind)}</span></div>
+                       <div class="dl-cell right"><span class="dl-k">Amount</span>
+                         <span class="money">${money(p.amount_kobo)}</span></div>
+                       <div class="dl-cell actions">
+                         ${p.status === "pending" ? `<button class="btn sm" data-confirm-pay="${p.id}">Confirm</button>` : ""}
+                         ${p.status === "success" ? `<button class="btn sm danger" data-refund="${p.id}">Refund</button>` : ""}
+                       </div>
+                     </div>`
+                   )
+                   .join("")}
+               </div>
+             </div>`
+          : ""
+      }
+    </div>`;
+}
+
+async function openDeal(id) {
+  navigate("deal", onView);
+  openDealId = id;
+  $("#dealDetail").innerHTML = skeleton(3);
+  const r = await GET(`/api/admin/deals/${id}`);
+  const d = r.deal;
+
+  $("#dealDetail").innerHTML = `
+    <div class="grid-2 wide-first">
+      <div id="dealTop">${dealTopHtml(d, r)}</div>
       <div class="card">
         <div class="card-head"><h2>Conversation</h2></div>
         <div class="thread" id="thread"></div>
@@ -220,11 +236,40 @@ async function openDeal(id) {
       </div>
     </div>`;
 
-  wireDeal(d);
-  poll = pollThread({ container: $("#thread"), url: `/api/admin/deals/${d.id}/messages`, mine: "admin" });
+  wireDealButtons(d);
+  wireChat({
+    box: $("#msgBox"),
+    sendBtn: $("#send"),
+    getUrl: () => `/api/admin/deals/${d.id}/messages`,
+    onSent: (m) => poll.push(m),
+  });
+  poll = pollThread({
+    container: $("#thread"),
+    url: `/api/admin/deals/${d.id}/messages`,
+    mine: "admin",
+    // A quote accepted, a status change, anything the CLIENT does reaches the
+    // admin as a chat message the instant it happens. Without this, that
+    // message shows up in the thread but the status pill and Money card next
+    // to it stay exactly as they were when the deal was opened — which is
+    // exactly how a "quote sent" system message could be visible while the
+    // quote/offer UI it refers to was nowhere to be seen.
+    onNew: () => refreshDealTop(id),
+  });
 }
 
-function wireDeal(d) {
+// Re-pulls this deal and re-renders only #dealTop — status, money, notices,
+// buttons. Never touches #thread or the composer, so a background update
+// can't interrupt whatever the admin is in the middle of typing or reading.
+async function refreshDealTop(id) {
+  if (openDealId !== id) return; // navigated away before this resolved
+  const r = await GET(`/api/admin/deals/${id}`);
+  if (openDealId !== id) return; // navigated away while this was in flight
+  $("#dealTop").innerHTML = dealTopHtml(r.deal, r);
+  wireDealButtons(r.deal);
+  refreshOverview();
+}
+
+function wireDealButtons(d) {
   const on = (sel, fn) => {
     const el = $(sel);
     if (el) el.onclick = busy(el, fn);
@@ -371,15 +416,6 @@ function wireDeal(d) {
         },
       })
     );
-  });
-
-  // The whole deal card, composer included, is torn down and rebuilt fresh on
-  // every openDeal(), so wiring this each time (rather than once) is correct.
-  wireChat({
-    box: $("#msgBox"),
-    sendBtn: $("#send"),
-    getUrl: () => `/api/admin/deals/${d.id}/messages`,
-    onSent: (m) => poll.push(m),
   });
 }
 

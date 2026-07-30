@@ -53,7 +53,31 @@ function select(id) {
     container: $("#thread"),
     url: `/api/client/deals/${id}/messages`,
     mine: "client",
+    // A quote, an acceptance, a payment being recorded — every one of these
+    // reaches the client as a chat message the moment it happens server side.
+    // Without this, the message shows up in the thread (that part already
+    // polled live) but the price/status card above it stays exactly as it
+    // was at page load, because nothing was re-checking the deal itself.
+    onNew: () => refreshCurrentDeal(id),
   });
+}
+
+// Re-pulls this deal's own state (status, quoted/agreed amount, payments) and
+// re-renders just the summary + payments cards — never touches the thread or
+// resets the poll, so an in-progress conversation is never disturbed by its
+// own trigger for refreshing.
+async function refreshCurrentDeal(id) {
+  try {
+    const r = await GET("/api/client/deals");
+    deals = r.deals;
+    const fresh = deals.find((d) => d.id === id);
+    if (!fresh || !current || current.id !== id) return; // switched tabs mid-flight
+    current = fresh;
+    renderSummary();
+    renderPayments();
+  } catch {
+    /* the next chat poll will trigger another attempt */
+  }
 }
 
 function renderSummary() {

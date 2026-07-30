@@ -289,7 +289,14 @@ function renderThread(container, messages, mine) {
 
 // Poll for new messages, appending only what's new. Serverless functions can't
 // hold a WebSocket open, so this is how the thread stays live.
-function pollThread({ container, url, mine, intervalMs = 4000 }) {
+// onNew(freshMessages) fires whenever messages actually land — a new quote,
+// an accepted deal, a payment recorded, all arrive as a chat message (system
+// or otherwise) at the same moment the underlying deal state changes server
+// side. Callers use it to refresh whatever ELSE depends on that state (the
+// quote/offer card, the status pill) without polling it on its own separate
+// timer — the chat activity itself is the signal that something is worth
+// re-checking.
+function pollThread({ container, url, mine, intervalMs = 4000, onNew }) {
   let since = 0;
   let all = [];
   let seen = new Set();
@@ -308,6 +315,7 @@ function pollThread({ container, url, mine, intervalMs = 4000 }) {
     all = all.concat(fresh);
     all.sort((a, b) => a.id - b.id);
     since = all[all.length - 1].id;
+    if (onNew) onNew(fresh);
     return true;
   }
 
