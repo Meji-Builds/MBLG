@@ -22,11 +22,18 @@ async function api(method, path, body) {
     /* empty or non-JSON body */
   }
   if (!res.ok || !json || json.ok === false) {
-    // A 500 with no JSON almost always means the database isn't reachable.
-    // Say that, rather than showing a bare status code.
+    // A 500 with no JSON almost always means the database isn't reachable —
+    // most often a free-tier Neon database that suspended itself while idle
+    // and hasn't finished waking back up. The .env guidance only makes sense
+    // to whoever is actually running this locally; a real visitor on the
+    // deployed site can't act on it and shouldn't be told to go check a file
+    // that doesn't exist for them.
+    const local = /localhost|127\.0\.0\.1/.test(location.hostname);
     const fallback =
       res.status >= 500
-        ? "The server hit an error. If you're running this locally, check DATABASE_URL in your .env."
+        ? local
+          ? "The server hit an error. Check that DATABASE_URL is set in your .env."
+          : "The server hit an error. Please try again in a moment."
         : `Request failed (${res.status})`;
     const err = new Error(json?.error || fallback);
     err.status = res.status;
