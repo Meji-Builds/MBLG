@@ -254,6 +254,42 @@ h3 { font-size: 0.92rem; font-weight: 650; }
 /* Standalone pages (landing, invite, client portal) have no rail. */
 .main.bare { padding-left: 0; }
 
+/* ── legal pages (Terms, Privacy) ─────────────────────────────────────────
+   Everything elsewhere is built for compact dashboard UI, so h1–h3 run small
+   and tight. Long-form reading needs its own scale and breathing room. */
+.legal h1 { font-size: 1.9rem; margin-bottom: 6px; }
+.legal .updated { color: var(--muted); font-size: 0.84rem; margin: 0 0 8px; }
+.legal .intro { color: var(--text-2); max-width: 62ch; margin: 0 0 32px; }
+.legal h2 {
+  font-size: 1.1rem; color: var(--text);
+  margin: 0; padding: 32px 0 12px;
+  border-top: 1px solid var(--line);
+}
+.legal h2:first-of-type { border-top: none; padding-top: 0; }
+.legal h3 { font-size: 0.96rem; color: var(--text-2); margin: 18px 0 8px; }
+.legal p { margin: 0 0 14px; color: var(--text-2); line-height: 1.7; }
+.legal ul, .legal ol { margin: 0 0 14px; padding-left: 22px; color: var(--text-2); line-height: 1.7; }
+.legal li { margin-bottom: 6px; }
+.legal li::marker { color: var(--muted); }
+.legal strong { color: var(--text); font-weight: 620; }
+.legal a { text-decoration: underline; text-underline-offset: 2px; }
+.legal table { width: 100%; border-collapse: collapse; margin: 0 0 14px; font-size: 0.88rem; }
+.legal th, .legal td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--text-2); }
+.legal th { color: var(--muted); font-weight: 600; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── site footer ──────────────────────────────────────────────────────── */
+.site-footer {
+  max-width: 1080px; margin: 0 auto;
+  padding: 26px 28px 44px;
+  display: flex; flex-wrap: wrap; gap: 10px 22px;
+  align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--line);
+  color: var(--faint); font-size: 0.8rem;
+}
+.site-footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--text-2); }
+
 .page-head {
   display: flex;
   align-items: flex-end;
