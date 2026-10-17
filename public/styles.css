@@ -26,6 +26,34 @@
    can't benefit from the preconnect hint and blocks render until this file
    is parsed *and* the imported stylesheet round-trips. */
 
+/* Instrument Sans has no glyph for ₦ (U+20A6) at all — confirmed directly
+   against the real font file, not assumed. Every money figure on the page
+   would otherwise show a tofu box instead of the currency symbol, exactly
+   the bug this platform already shipped once with the previous typeface.
+   A second face under the same family name, scoped to just that one code
+   point per weight actually used for money, pulls the glyph from Noto Sans
+   (confirmed to have it) while every other character still comes from
+   Instrument Sans. Noto Sans is loaded alongside it in the same Google
+   Fonts request in every page's <head>. */
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("https://fonts.gstatic.com/s/notosans/v42/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyD9A99d.ttf") format("truetype");
+  font-weight: 400;
+  unicode-range: U+20A6;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("https://fonts.gstatic.com/s/notosans/v42/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyAjBN9d.ttf") format("truetype");
+  font-weight: 500 600;
+  unicode-range: U+20A6;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("https://fonts.gstatic.com/s/notosans/v42/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjcz6L1SoM-jCpoiyAaBN9d.ttf") format("truetype");
+  font-weight: 700;
+  unicode-range: U+20A6;
+}
+
 :root {
   --bone:     #eeebe5;   /* page background */
   --bone-2:   #e4e0d8;   /* hover fills, subtle chips */
