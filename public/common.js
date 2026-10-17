@@ -120,6 +120,17 @@ function hydrateIcons(root = document) {
 }
 document.addEventListener("DOMContentLoaded", () => hydrateIcons());
 
+// A sticky .topbar picks up a hairline bottom border once the page has
+// scrolled, so it doesn't draw a line across the hero before there's
+// anything to separate from.
+(() => {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  const onScroll = () => bar.classList.toggle("scrolled", window.scrollY > 10);
+  document.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+
 // ---- status ----
 const STATUS = {
   new: "New",

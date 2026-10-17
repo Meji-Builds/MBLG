@@ -89,6 +89,33 @@ app.post(
 
 app.use(express.json());
 app.use(cookieParser());
+
+// The studio console is staff-only: not linked from any public page, kept out
+// of search, and denied the ability to be framed by another site. On Vercel
+// this same policy is set at the edge via vercel.json's "headers" block —
+// admin.html there is served as a static file and never reaches this Express
+// app at all, so these headers only take effect for local dev (`node
+// server.js`). Keeping both in sync means the behaviour is identical either
+// way, and this app never silently depends on Vercel's config alone.
+app.use((req, res, next) => {
+  if (req.path === "/admin.html") {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self'; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; " +
+        "connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; " +
+        "base-uri 'none'; form-action 'self'; object-src 'none'"
+    );
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 // ---------------------------------------------------------------------------

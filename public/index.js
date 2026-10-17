@@ -21,6 +21,8 @@ async function loadConfig(isRetry) {
     const c = await GET("/api/config");
     $("#pctLabel").textContent = `${c.defaultCommissionPercent}%`;
     $("#holdLabel").textContent = `${c.holdDays}-day`;
+    $$(".pct-num").forEach((el) => (el.textContent = c.defaultCommissionPercent));
+    $$(".hold-num").forEach((el) => (el.textContent = c.holdDays));
   } catch (e) {
     if (!isRetry) return setTimeout(() => loadConfig(true), 1500);
 
